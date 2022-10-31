@@ -1,0 +1,3 @@
+[submodule "rtl/nextz80"]
+	path = rtl/nextz80
+	url = https://github.com/dirkmo/nextz80.git
