@@ -1,3 +1,6 @@
 [submodule "rtl/tv80"]
 	path = import/tv80
 	url = https://github.com/dirkmo/tv80
+[submodule "import/uartmaster"]
+	path = import/uartmaster
+	url = https://github.com/dirkmo/uartmaster

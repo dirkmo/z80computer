@@ -19,7 +19,10 @@ CXXFLAGS=-g -Wall -O0  # -DVL_USER_STOP
 LDFLAGS=-lncurses
 
 CPPSRC=sim.cpp #dcpu.c uart.cpp
-VERILOGSRC=../rtl/z80computer.v ../import/tv80/rtl/core/*.v
+
+VERILOGSRC=../rtl/z80computer.v
+VERILOGSRC+=../import/tv80/rtl/core/*.v
+VERILOGSRC+=../import/uartmaster/rtl/*.v
 
 all: z80computer
 
@@ -40,7 +43,7 @@ wave: sim
 	gtkwave sim.gtkw &
 
 iverilog:
-	iverilog -Wall $(VERILOGSRC)
+	iverilog -Wall -Wno-timescale $(VERILOGSRC)
 
 yosys:
 	yosys -Wall -p "synth_ice40 -dsp" $(VERILOGSRC)
