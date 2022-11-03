@@ -27,13 +27,16 @@ wire cpu_iorq_n;
 wire cpu_rd_n;
 wire cpu_wr_n;
 wire cpu_we = ~cpu_wr_n & (~cpu_mreq_n | ~cpu_iorq_n);
-wire cpu_cs = (~cpu_wr_n | ~cpu_rd_n) & (~cpu_mreq_n | ~cpu_iorq_n | ~cpu_m1);
+wire cpu_memcs = (~cpu_wr_n || ~cpu_rd_n) && ~cpu_mreq_n;
+wire cpu_iocs = (~cpu_wr_n || ~cpu_rd_n) && (~cpu_iorq_n && cpu_m1);
 wire reset;
 wire cpu_wait;
 wire cpu_ack;
 wire [15:0] o_cpu_addr;
 wire [7:0] o_cpu_dat;
 wire cpu_int;
+wire cpu_int_ack = cpu_iorq_n && cpu_m1;
+wire cpu_opcode_fetch = cpu_mreq_n && cpu_m1;
 
 tv80s #(.Mode(1), .T2Write(1), .IOWait(0)) cpu0 (
   .clk(i_clk),
@@ -96,6 +99,9 @@ UartMasterSlave #(.BAUDRATE(115200),.SYS_FREQ(25000000)) uart(
     .o_reset(o_uart_reset)
 );
 
+assign i_uartslave_we = cpu_we;
+assign i_uartslave_cs = cpu_iocs && (o_cpu_addr[7:1] == 7'd0); // uart-slave on port 0 (status), 1 (rx/tx)
+
 // multi-master handling
 
 assign reset = o_uart_reset || i_reset;
@@ -115,9 +121,11 @@ assign           o_we =   //r_vgamaster_active ? 1'b0 :
 
 assign           o_cs =   //r_vgamaster_active ? vgamaster_cs :
                          r_uartmaster_active ? uartmaster_cs :
-                          r_cpumaster_active ? 1'b1 : 0;
+                          r_cpumaster_active ? cpu_memcs : 0;
 
-assign cpu_ack      = r_cpumaster_active && cpu_cs && i_ack;
+wire cpu_ioack = i_uartslave_cs && o_uartslave_ack;
+
+assign cpu_ack      = r_cpumaster_active && ((cpu_memcs && i_ack) || cpu_ioack);
 assign uartmaster_ack = ~r_uartmaster_active && uartmaster_cs && i_ack;
 
 always @(posedge i_clk)
