@@ -19,7 +19,7 @@ CXXFLAGS=-g -Wall -O0  # -DVL_USER_STOP
 LDFLAGS=-lncurses
 
 CPPSRC=sim.cpp #dcpu.c uart.cpp
-VERILOGSRC=../rtl/z80computer.v ../rtl/tv80/rtl/core/*.v
+VERILOGSRC=../rtl/z80computer.v ../import/tv80/rtl/core/*.v
 
 all: z80computer
 
