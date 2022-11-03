@@ -1,0 +1,37 @@
+set_io i_clk        J3
+set_io i_reset_n    K11
+
+set_io o_addr[0]    N6
+set_io o_addr[1]    T1
+set_io o_addr[2]    P4
+set_io o_addr[3]    R2
+set_io o_addr[4]    N5
+set_io o_addr[5]    T2
+set_io o_addr[6]    P5
+set_io o_addr[7]    R3
+set_io o_addr[8]    R5
+set_io o_addr[9]    T3
+set_io o_addr[10]   R4
+set_io o_addr[11]   M7
+set_io o_addr[12]   N7
+set_io o_addr[13]   P6
+set_io o_addr[14]   M8
+set_io o_addr[15]   T5
+set_io o_addr[16]   R6
+set_io o_addr[17]   P8
+
+set_io sram_cs      T6
+set_io sram_oe      L9
+set_io sram_we      T7
+
+set_io dat[0]       T8
+set_io dat[1]       P7
+set_io dat[2]       N9
+set_io dat[3]       T9
+set_io dat[4]       M9
+set_io dat[5]       R9
+set_io dat[6]       K9
+set_io dat[7]       P9
+
+set_io i_int        E4 # zufällig ausgewählt
+set_io i_nmi        B2 # zufällig ausgewählt

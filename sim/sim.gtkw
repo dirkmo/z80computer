@@ -1,33 +1,36 @@
 [*]
 [*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
-[*] Mon Oct 31 20:38:19 2022
+[*] Thu Nov  3 15:56:58 2022
 [*]
 [dumpfile] "/home/dirk/dev/z80computer/sim/trace.vcd"
-[dumpfile_mtime] "Mon Oct 31 20:37:56 2022"
-[dumpfile_size] 41736
+[dumpfile_mtime] "Thu Nov  3 15:56:34 2022"
+[dumpfile_size] 23006
 [savefile] "/home/dirk/dev/z80computer/sim/sim.gtkw"
-[timestart] 7500
+[timestart] 0
 [size] 1920 1031
-[pos] -1 -1
-*-12.000000 30020 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] 738 -176
+*-13.000000 30020 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
-[treeopen] TOP.top.
 [sst_width] 317
 [signals_width] 222
 [sst_expanded] 1
 [sst_vpaned_height] 276
 @28
-TOP.top.cpu0.CLK
-@22
-TOP.top.cpu0.DI[7:0]
-TOP.top.cpu_do[7:0]
-@29
-TOP.top.cpu_wr
+TOP.i_ack
+TOP.i_clk
+@23
+TOP.i_dat[7:0]
 @28
-TOP.top.cpu0.HALT
-TOP.top.cpu0.IORQ
-TOP.top.cpu0.MREQ
-TOP.top.cpu0.WAIT
-TOP.top.cpu0.RESET
+TOP.i_int
+TOP.i_nmi
+TOP.i_reset
+@22
+TOP.o_addr[15:0]
+@28
+TOP.o_cs
+@22
+TOP.o_dat[7:0]
+@28
+TOP.o_we
 [pattern_trace] 1
 [pattern_trace] 0
