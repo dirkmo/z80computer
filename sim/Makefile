@@ -18,7 +18,8 @@ endif
 CXXFLAGS=-g -Wall -O0  # -DVL_USER_STOP
 LDFLAGS=-lncurses
 
-CPPSRC=sim.cpp #dcpu.c uart.cpp
+CPPSRC=sim.cpp
+CPPSRC+=uart.cpp
 
 VERILOGSRC=../rtl/z80computer.v
 VERILOGSRC+=../import/tv80/rtl/core/*.v

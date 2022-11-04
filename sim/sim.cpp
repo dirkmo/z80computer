@@ -4,6 +4,8 @@
 #include <verilated_vcd_c.h>
 #include "verilated.h"
 #include "Vz80computer.h"
+#include "Vz80computer_z80computer.h"
+#include "uart.h"
 
 Vz80computer *pCore;
 VerilatedVcdC *pTrace = NULL;
@@ -41,7 +43,7 @@ void reset() {
     pCore->i_reset = 0;
 }
 
-void handle(Vz80computer *pCore) {
+void handle_mem(Vz80computer *pCore) {
     if (pCore->o_cs) {
         if (pCore->o_we) {
             mem[pCore->o_addr] = pCore->o_dat;
@@ -51,6 +53,12 @@ void handle(Vz80computer *pCore) {
         }
     }
     pCore->i_ack = pCore->o_cs;
+}
+
+void handle(Vz80computer *pCore) {
+    handle_mem(pCore);
+    int rxbyte;
+    uart_handle(&rxbyte);
     tick();
 }
 
@@ -78,8 +86,9 @@ int main(int argc, char *argv[]) {
 
     Verilated::traceEverOn(true);
     pCore = new Vz80computer();
-
     opentrace("trace.vcd");
+
+    uart_init(&pCore->i_uart_rx, &pCore->o_uart_tx, &pCore->i_clk, pCore->z80computer->SYS_FREQ/pCore->z80computer->BAUDRATE);
 
     reset();
     pCore->i_ack = 1;

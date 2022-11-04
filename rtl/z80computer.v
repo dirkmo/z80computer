@@ -15,6 +15,10 @@ module z80computer(
     output o_uart_tx
 );
 
+parameter
+    BAUDRATE /* verilator public */ = 115200,
+    SYS_FREQ /* verilator public */ = 25000000;
+
 // wire vgamaster_access;
 // reg r_vgamaster_active;
 reg r_uartmaster_active;
@@ -74,7 +78,7 @@ wire i_uartslave_cs;
 wire o_uart_reset;
 wire o_uart_int;
 
-UartMasterSlave #(.BAUDRATE(115200),.SYS_FREQ(25000000)) uart(
+UartMasterSlave #(.BAUDRATE(BAUDRATE),.SYS_FREQ(SYS_FREQ)) uart(
     .i_clk(i_clk),
     .i_reset(i_reset),
 
