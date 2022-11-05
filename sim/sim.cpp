@@ -58,7 +58,9 @@ void handle_mem(Vz80computer *pCore) {
 void handle(Vz80computer *pCore) {
     handle_mem(pCore);
     int rxbyte;
-    uart_handle(&rxbyte);
+    if (uart_handle(&rxbyte)) {
+        printf("%c", isgraph(rxbyte) ? rxbyte : ' ');
+    }
     tick();
 }
 
@@ -93,7 +95,7 @@ int main(int argc, char *argv[]) {
     reset();
     pCore->i_ack = 1;
 
-    while(tickcount < 100*ts) {
+    while(tickcount < 10000*ts && !Verilated::gotFinish()) {
         handle(pCore);
     }
 

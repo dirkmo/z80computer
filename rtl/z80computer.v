@@ -16,7 +16,7 @@ module z80computer(
 );
 
 parameter
-    BAUDRATE /* verilator public */ = 115200,
+    BAUDRATE /* verilator public */ = 1152000,
     SYS_FREQ /* verilator public */ = 25000000;
 
 // wire vgamaster_access;
@@ -38,6 +38,7 @@ wire cpu_wait;
 wire cpu_ack;
 wire [15:0] o_cpu_addr;
 wire [7:0] o_cpu_dat;
+wire [7:0] i_cpu_dat;
 wire cpu_int;
 wire cpu_int_ack = cpu_iorq_n && cpu_m1;
 wire cpu_opcode_fetch = cpu_mreq_n && cpu_m1;
@@ -56,7 +57,7 @@ tv80s #(.Mode(1), .T2Write(1), .IOWait(0)) cpu0 (
   .busak_n(),
   .A(o_cpu_addr),
   .do(o_cpu_dat),
-  .di(i_dat),
+  .di(i_cpu_dat),
   .wait_n(~cpu_wait),
   .int_n(~cpu_int),
   .nmi_n(~i_nmi),
@@ -71,6 +72,7 @@ wire uartmaster_cs;
 wire uartmaster_ack;
 
 wire [7:0] o_uartslave_dat;
+wire [7:0] i_uartslave_dat;
 wire o_uartslave_ack;
 wire i_uartslave_we;
 wire i_uartslave_cs;
@@ -89,7 +91,7 @@ UartMasterSlave #(.BAUDRATE(BAUDRATE),.SYS_FREQ(SYS_FREQ)) uart(
     .o_master_we(uartmaster_we),
     .o_master_cs(uartmaster_cs),
 
-    .i_slave_data(i_dat),
+    .i_slave_data(o_dat),
     .o_slave_data(o_uartslave_dat),
     .i_slave_addr(o_addr[0]),
     .o_slave_ack(o_uartslave_ack),
@@ -128,8 +130,9 @@ assign           o_cs =   //r_vgamaster_active ? vgamaster_cs :
                           r_cpumaster_active ? cpu_memcs : 0;
 
 wire cpu_ioack = i_uartslave_cs && o_uartslave_ack;
+wire i_cpu_dat = i_uartslave_cs ? o_uartslave_dat : i_dat;
 
-assign cpu_ack      = r_cpumaster_active && ((cpu_memcs && i_ack) || cpu_ioack);
+assign cpu_ack      = r_cpumaster_active;// && ((cpu_memcs && i_ack) || cpu_ioack);
 assign uartmaster_ack = ~r_uartmaster_active && uartmaster_cs && i_ack;
 
 always @(posedge i_clk)
@@ -147,5 +150,9 @@ begin
 end
 
 assign cpu_int = i_int || o_uart_int;
+
+always @(posedge i_clk)
+    if (o_cpu_addr[7:0] == 8'hff && ~cpu_iorq_n)
+        $finish;
 
 endmodule
