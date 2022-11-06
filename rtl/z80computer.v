@@ -25,14 +25,14 @@ reg r_uartmaster_active;
 reg r_cpumaster_active;
 
 // CPU
-wire cpu_m1;
+wire cpu_m1_n;
 wire cpu_mreq_n;
 wire cpu_iorq_n;
 wire cpu_rd_n;
 wire cpu_wr_n;
 wire cpu_we = ~cpu_wr_n & (~cpu_mreq_n | ~cpu_iorq_n);
 wire cpu_memcs = (~cpu_wr_n || ~cpu_rd_n) && ~cpu_mreq_n;
-wire cpu_iocs = (~cpu_wr_n || ~cpu_rd_n) && (~cpu_iorq_n && cpu_m1);
+wire cpu_iocs = (~cpu_wr_n || ~cpu_rd_n) && (~cpu_iorq_n && cpu_m1_n);
 wire reset;
 wire cpu_wait;
 wire cpu_ack;
@@ -40,14 +40,14 @@ wire [15:0] o_cpu_addr;
 wire [7:0] o_cpu_dat;
 wire [7:0] i_cpu_dat;
 wire cpu_int;
-wire cpu_int_ack = cpu_iorq_n && cpu_m1;
-wire cpu_opcode_fetch = cpu_mreq_n && cpu_m1;
+wire cpu_int_ack = cpu_iorq_n && cpu_m1_n;
+wire cpu_opcode_fetch_n /* verilator public */ = cpu_mreq_n || cpu_m1_n;
 
 tv80s #(.Mode(1), .T2Write(1), .IOWait(0)) cpu0 (
   .clk(i_clk),
   .reset_n(~reset),
 
-  .m1_n(cpu_m1),
+  .m1_n(cpu_m1_n),
   .mreq_n(cpu_mreq_n),
   .iorq_n(cpu_iorq_n),
   .rd_n(cpu_rd_n),

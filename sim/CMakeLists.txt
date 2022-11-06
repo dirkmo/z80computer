@@ -50,7 +50,7 @@ verilate(simulation TRACE
   )
 
 add_custom_command(OUTPUT test.bin
-    COMMAND z80asm -l -L -o test.bin ${PROJECT_SOURCE_DIR}/test.asm 2> test.lst || cat test.lst
+    COMMAND z80asm --list=test.lst --label=test.sym -o test.bin ${PROJECT_SOURCE_DIR}/test.asm
 	COMMAND hexdump -ve '1/1 \"%.2x \"' test.bin > test.mem
     DEPENDS test.asm
     COMMENT "Assembling test program"

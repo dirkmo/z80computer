@@ -7,6 +7,8 @@
 #include "Vz80computer_z80computer.h"
 #include "uart.h"
 
+//#define _DEBUG_PRINTS
+
 Vz80computer *pCore;
 VerilatedVcdC *pTrace = NULL;
 uint64_t tickcount = 0;
@@ -46,10 +48,20 @@ void reset() {
 void handle_mem(Vz80computer *pCore) {
     if (pCore->o_cs) {
         if (pCore->o_we) {
+#ifdef _DEBUG_PRINTS
+            if (pCore->z80computer->cpu_opcode_fetch_n) {
+                printf("write %04x = %02x\n", pCore->o_addr, pCore->o_dat);
+            }
+#endif
             mem[pCore->o_addr] = pCore->o_dat;
             pCore->i_dat = 0;
         } else {
             pCore->i_dat = mem[pCore->o_addr];
+#ifdef _DEBUG_PRINTS
+            if (pCore->z80computer->cpu_opcode_fetch_n) {
+                printf("read %04x = %02x\n", pCore->o_addr, pCore->i_dat);
+            }
+#endif
         }
     }
     pCore->i_ack = pCore->o_cs;
@@ -59,8 +71,13 @@ void handle(Vz80computer *pCore) {
     handle_mem(pCore);
     int rxbyte;
     if (uart_handle(&rxbyte)) {
-        printf("%c", isgraph(rxbyte) ? rxbyte : ' ');
+        printf("%c", rxbyte);
     }
+#ifdef _DEBUG_PRINTS
+    if (!pCore->z80computer->cpu_opcode_fetch_n) {
+        printf("OP %04x\n", pCore->o_addr);
+    }
+#endif
     tick();
 }
 
@@ -95,7 +112,7 @@ int main(int argc, char *argv[]) {
     reset();
     pCore->i_ack = 1;
 
-    while(tickcount < 10000*ts && !Verilated::gotFinish()) {
+    while(tickcount < 1000000*ts && !Verilated::gotFinish()) {
         handle(pCore);
     }
 

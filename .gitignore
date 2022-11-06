@@ -3,3 +3,4 @@ sim/build/*
 sim/test.bin
 sim/test.mem
 sim/trace.vcd
+2063-Z80-cpm/
