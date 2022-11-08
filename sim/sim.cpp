@@ -6,6 +6,7 @@
 #include "Vz80computer.h"
 #include "Vz80computer_z80computer.h"
 #include "uart.h"
+#include "getc.h"
 
 //#define _DEBUG_PRINTS
 
@@ -83,6 +84,10 @@ void handle(Vz80computer *pCore) {
         printf("OP %04x\n", pCore->o_addr);
     }
 #endif
+    char ch = getc_nonblocking();
+    if (ch != 255) {
+        uart_putc(0, ch);
+    }
     tick();
 }
 

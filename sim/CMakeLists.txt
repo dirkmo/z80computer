@@ -15,7 +15,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -DEDGE_DETECTION=1")
 
 # ${PROJECT_SOURCE_DIR}
 
-add_executable(simulation sim.cpp ../import/uartmaster/sim/uart.cpp)
+add_executable(simulation sim.cpp ../import/uartmaster/sim/uart.cpp getc.cpp)
 
 target_include_directories(simulation PUBLIC ../import/uartmaster/sim)
 

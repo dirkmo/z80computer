@@ -1,4 +1,4 @@
-_DEBUG_LEVEL: equ 3
+_DEBUG_LEVEL: equ 0
 
 ; BIOS jump table
 
@@ -20,10 +20,10 @@ WRITE:  JP .bios_write
 PRSTAT: JP .bios_prstat
 SECTRN: JP .bios_sectrn
 
-bios_disk:      db 0xff
-bios_track:     dw 0x1234
-bios_sector:    dw 0x1234
-bios_dma_addr:  dw 0x1234
+bios_disk:      db 0
+bios_track:     dw 0
+bios_sector:    dw 0
+bios_dma_addr:  dw 0
 
 
 .go_cpm:
@@ -76,11 +76,11 @@ endif
 
 .bios_conout:
     in a, (PORT_UART_ST)
-if 0
+if 1
     and BIT_UART_ST_TXFULL
     jr nz, .bios_conout
-    ; für debug: fifo nicht ausnutzen
 else
+    ; für debug: fifo nicht ausnutzen
     and BIT_UART_ST_TXEMPTY
     jr z, .bios_conout
 endif
@@ -131,7 +131,7 @@ endif
 .bios_seldsk:
 	ld a,c
 	ld	(bios_disk),a
-    ld hl,0
+    ld hl,bios_dph
 
 if _DEBUG_LEVEL > 2
     call iputs
@@ -142,35 +142,58 @@ endif
 
 .bios_setsec:
 	ld	(bios_sector),bc
-
 if _DEBUG_LEVEL > 2
     call iputs
     db ".bios_setsec\r\n\0"
     call bios_debug_disk
 endif
-
     ret
-
 
 .bios_setdma:
 	ld (bios_dma_addr),bc
-
 if _DEBUG_LEVEL > 2
     call iputs
     db ".bios_setdma\r\n\0"
     call bios_debug_disk
 endif
-
     ret
 
+; READ
+; Assuming the drive has been selected, the track has been set, and the DMA
+; address has been specified, the READ subroutine attempts to read one sector
+; based upon these parameters and returns the following error codes in
+; register A:
+; 0 - no errors occurred
+; 1 - nonrecoverable error condition occurred
+; Currently, CP/M responds only to a zero or nonzero value as the return code.
+; That is, if the value in register A is 0, CP/M assumes that the disk
+; operation was completed properly. If an error occurs the CBIOS should attempt
+; at least 10 retries to see if the error is recoverable. When an error is
+; reported the BDOS prints the message BDOS ERR ON x: BAD SECTOR. The operator
+; then has the option of pressing a carriage return to ignore the error, or
+; CTRL-C to abort.
 
 .bios_read:
-    ld a,1
+	; fake a 'blank'/formatted sector
+	ld	hl,(bios_dma_addr)	; HL = buffer address
+	ld	de,(bios_dma_addr)
+	inc	de			; DE = buffer address + 1
+	ld	bc,0x007f		; BC = 127
+	ld	(hl),0xe5
+	ldir				; set 128 bytes from (hl) to 0xe5
 if _DEBUG_LEVEL > 2
     call iputs
     db ".bios_read\r\n\0"
 endif
+	xor	a			; A = 0 = OK
     ret
+
+; Data is written from the currently selected DMA address to the currently
+; selected drive, track, and sector. For floppy disks, the data should be marked
+; as nondeleted data to maintain compatibility with other CP/M systems. The
+; error codes are returned in register A
+; 0 - no errors occurred
+; 1 - nonrecoverable error condition occurred
 
 .bios_write:
 if _DEBUG_LEVEL > 2
