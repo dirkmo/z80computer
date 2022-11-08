@@ -71,7 +71,12 @@ void handle(Vz80computer *pCore) {
     handle_mem(pCore);
     int rxbyte;
     if (uart_handle(&rxbyte)) {
+#ifdef _DEBUG_PRINTS
+        printf("UART: %c\n", rxbyte);
+#else
         printf("%c", rxbyte);
+#endif
+        fflush(stdout);
     }
 #ifdef _DEBUG_PRINTS
     if (!pCore->z80computer->cpu_opcode_fetch_n) {

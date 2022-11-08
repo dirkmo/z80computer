@@ -4,3 +4,9 @@ sim/test.bin
 sim/test.mem
 sim/trace.vcd
 2063-Z80-cpm/
+build/
+sw/cpm22/cpm2-asm.zip
+sw/cpm22/filesystem
+sw/cpm22/cpm22-b.zip
+sw/cpm22/cpm22.asm
+sw/cpm22/CPM22.Z80
