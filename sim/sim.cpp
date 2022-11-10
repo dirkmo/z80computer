@@ -6,7 +6,7 @@
 #include "Vz80computer.h"
 #include "Vz80computer_z80computer.h"
 #include "uart.h"
-#include "getc.h"
+#include "console.h"
 #include "disk.h"
 
 //#define _DEBUG_PRINTS
@@ -98,11 +98,7 @@ void handle(Vz80computer *pCore) {
     handle_io(pCore);
     int rxbyte;
     if (uart_handle(&rxbyte)) {
-#ifdef _DEBUG_PRINTS
-        printf("UART: %c\n", rxbyte);
-#else
         printf("%c", rxbyte);
-#endif
         fflush(stdout);
     }
 #ifdef _DEBUG_PRINTS
@@ -110,7 +106,7 @@ void handle(Vz80computer *pCore) {
         printf("OP %04x\n", pCore->o_addr);
     }
 #endif
-    unsigned char ch = getc_nonblocking();
+    unsigned char ch = console_getc();
     if (ch != 255) {
         uart_putc(0, ch);
     }
@@ -151,6 +147,8 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "ERROR: Failed to load disk image '%s'\n", "disk.img");
         return -3;
     }
+
+    console_init();
 
     reset();
     pCore->i_ack = 1;

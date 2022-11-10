@@ -12,3 +12,7 @@ sw/cpm22/cpm22.asm
 sw/cpm22/CPM22.Z80
 sw/os/disk.img
 sw/os/trace.vcd
+sw/os/sys.sym
+sw/os/sys.lst
+sw/os/sys.bin
+sw/os/sim.gtkw
