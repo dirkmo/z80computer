@@ -115,9 +115,18 @@ if _DEBUG_LEVEL > 2
     call iputs
     db ".bios_home\r\n\0"
 endif
-    ; fallthrough settrk intended
     ld bc,0
+    jp .bios_settrk
 
+
+; SETTRK
+; Register BC contains the track number for subsequent disk accesses on the
+; currently selected drive. The sector number in BC is the same as the number
+; returned from the SECTRAN entry point. You can choose to seek the selected
+; track at this time or delay the seek until the next read or write actually
+; occurs. Register BC can take on values in the range 0-76 corresponding t
+; valid track numbers for standard floppy disk drives and 0-65535 for
+; nonstandard disk subsystems.
 .bios_settrk:
 	ld (bios_track),bc
 
@@ -128,6 +137,18 @@ if _DEBUG_LEVEL > 2
 endif
     ret
 
+
+; SELDSK
+; The disk drive given by register C is selected for further operations, where register C contains 0 for drive A, 1 for drive B, and so on up to 15 for drive P (the standard CP/M distribution version supports four drives). On each disk select, SELDSK must return in HL the base address of a 16-byte area, called the Disk Parameter Header, described in Section 6.10. For standard floppy disk drives, the contents of the header and associated tables do not change; thus, the program segment included in the sample CBIOS performs this operation automatically.
+; If there is an attempt to select a nonexistent drive, SELDSK returns HL = 0000H
+; as an error indicator. Although SELDSK must return the header address on each
+; call, it is advisable to postpone the physical disk select operation until an
+; I/O function (seek, read, or write) is actually performed, because disk selects
+; often occur without ultimately performing any disk I/O, , and many controllers
+; unload the head of the current disk before selecting the new drive. This causes
+; an excessive amount of noise and disk wear. The least significant bit of
+; register E is zero if this is the first occurrence of the drive select since the
+; last cold or warm start.
 .bios_seldsk:
 	ld a,c
 	ld	(bios_disk),a
@@ -140,6 +161,12 @@ if _DEBUG_LEVEL > 2
 endif
     ret
 
+; SETSEC
+; Register BC contains the sector number, 1 through 26, for subsequent disk
+; accesses on the currently selected drive. The sector number in BC is the same
+; as the number returned from the SECTRAN entry point. You can choose to send
+; this information to the controller at this point or delay sector selection
+; until a read or write operation occurs.
 .bios_setsec:
 	ld	(bios_sector),bc
 if _DEBUG_LEVEL > 2
@@ -149,6 +176,16 @@ if _DEBUG_LEVEL > 2
 endif
     ret
 
+; SETDMA
+; Register BC contains the DMA (Disk Memory Access) address for subsequent read
+; or write operations. For example, if B = 00H and C = 80H when SETDMA is called,
+; all subsequent read operations read their data into 80H through 0FFH and all
+; subsequent write operations get their data from 80H through 0FFH, until the next
+; call to SETDMA occurs. The initial DMA address is assumed to be 80H. The
+; controller need not actually support Direct Memory Access. If, for example, all
+; data transfers are through I/O ports, the CBIOS that is constructed uses the
+; 128 byte area starting at the selected DMA address for the memory buffer during
+; the subsequent read or write operations.
 .bios_setdma:
 	ld (bios_dma_addr),bc
 if _DEBUG_LEVEL > 2
@@ -174,6 +211,29 @@ endif
 ; CTRL-C to abort.
 
 .bios_read:
+    ld a, (bios_disk)
+    out (PORT_DISK_CFG), a
+    ld a, (bios_track)
+    out (PORT_DISK_CFG), a
+    ld a, (bios_track+1)
+    out (PORT_DISK_CFG), a
+    ld a, (bios_sector)
+    out (PORT_DISK_CFG), a
+
+    ld hl, (bios_dma_addr)
+    ld c, 128
+.bios_read_1:
+    in a, (PORT_DISK_IO)
+    ld (hl), a
+    inc hl
+    dec c
+    jr nz, .bios_read_1
+
+	xor	a			; A = 0 = OK
+    ret
+
+
+.bios_read__:
 	; fake a 'blank'/formatted sector
 	ld	hl,(bios_dma_addr)	; HL = buffer address
 	ld	de,(bios_dma_addr)
@@ -211,7 +271,7 @@ endif
     ret
 
 .bios_sectrn:
-	; 1:1 translation  (no skew factor)
+	; 1:1 translation (no skew factor)
 	ld	h,b
 	ld	l,c
 if _DEBUG_LEVEL > 2
@@ -250,5 +310,12 @@ bios_debug_disk:
 	call	puts_crlf
 
 	ret
+
+uart_flush_tx:
+    in a, (PORT_UART_ST)
+    xor BIT_UART_ST_TXEMPTY
+    and BIT_UART_ST_TXEMPTY
+    jr z, uart_flush_tx
+    ret
 
 simstop: out (0xff), a

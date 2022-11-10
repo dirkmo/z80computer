@@ -11,4 +11,4 @@ disk.img:
 	cpmcp -f z80-retro-2k-8m $@ ../cpm22/filesystem/* 0:
 
 clean:
-	rm -f sys.bin sys.lst sys.sym disk.img
+	rm -f sys.bin sys.lst sys.sym

@@ -10,3 +10,5 @@ sw/cpm22/filesystem
 sw/cpm22/cpm22-b.zip
 sw/cpm22/cpm22.asm
 sw/cpm22/CPM22.Z80
+sw/os/disk.img
+sw/os/trace.vcd

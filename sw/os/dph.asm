@@ -48,16 +48,16 @@ bios_dph:
 .bios_wboot_stack:		; (ab)use the BDOS directory buffer as a stack during WBOOT
 
 .bios_dpb_a:
-	dw	4		; SPT
-	db	4		; BSH
-	db	15		; BLM
-	db	0		; EXM
-	dw	4087		; DSM (max allocation block number)
-	dw	511		; DRM
-	db	0xff		; AL0
-	db	0x00		; AL1
-	dw	0		; CKS
-	dw	32		; OFF
+	dw	4       ; SPT sectors per track
+	db	4       ; BSH data allocation shift factor
+	db	15      ; BLM data allocation block mask
+	db	0       ; EXM extend mask
+	dw	4087    ; DSM (max allocation block number)
+	dw	511     ; DRM total numbers of directores
+	db	0xff    ; AL0
+	db	0x00    ; AL1
+	dw	0       ; CKS
+	dw	32      ; OFF reserved tracks at the beginning of disk
 
 .bios_alv_a:
 	ds	(4087/8)+1,0xaa	; scratchpad used by BDOS for disk allocation info

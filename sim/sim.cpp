@@ -7,8 +7,12 @@
 #include "Vz80computer_z80computer.h"
 #include "uart.h"
 #include "getc.h"
+#include "disk.h"
 
 //#define _DEBUG_PRINTS
+
+#define PORT_DISK_CFG 2
+#define PORT_DISK_IO  3
 
 Vz80computer *pCore;
 VerilatedVcdC *pTrace = NULL;
@@ -47,7 +51,7 @@ void reset() {
 }
 
 void handle_mem(Vz80computer *pCore) {
-    if (pCore->o_cs) {
+    if (pCore->o_cs && !pCore->z80computer->cpu_iocs) {
         if (pCore->o_we) {
 #ifdef _DEBUG_PRINTS
             if (pCore->z80computer->cpu_opcode_fetch_n) {
@@ -68,8 +72,30 @@ void handle_mem(Vz80computer *pCore) {
     pCore->i_ack = pCore->o_cs;
 }
 
+void handle_io(Vz80computer *pCore) {
+    static uint32_t disk_sector = 0;
+    if (pCore->z80computer->cpu_iocs) {
+        uint8_t addr = pCore->o_addr & 0xff;
+        if (pCore->o_we) {
+            if (addr == PORT_DISK_CFG) {
+                // disk, track_lo, track_hi, sector
+                disk_sector = (disk_sector << 8) | pCore->o_dat;
+            } else if (addr == PORT_DISK_IO) {
+                disk_sector_write(disk_sector, pCore->o_dat);
+            }
+        } else {
+            pCore->i_dat = 0;
+            if (addr == PORT_DISK_IO) {
+                pCore->i_dat = disk_sector_read(disk_sector);
+            }
+        }
+    }
+    pCore->i_ack = pCore->z80computer->cpu_iocs;
+}
+
 void handle(Vz80computer *pCore) {
     handle_mem(pCore);
+    handle_io(pCore);
     int rxbyte;
     if (uart_handle(&rxbyte)) {
 #ifdef _DEBUG_PRINTS
@@ -84,7 +110,7 @@ void handle(Vz80computer *pCore) {
         printf("OP %04x\n", pCore->o_addr);
     }
 #endif
-    char ch = getc_nonblocking();
+    unsigned char ch = getc_nonblocking();
     if (ch != 255) {
         uart_putc(0, ch);
     }
@@ -109,20 +135,27 @@ int main(int argc, char *argv[]) {
     printf("z80-computer simulator\n\n");
 
     if (program_load(argv[1], 0)) {
-        fprintf(stderr, "ERROR: Failed to load file '%s'\n", argv[1]);
+        fprintf(stderr, "ERROR: Failed to load program file '%s'\n", argv[1]);
         return -2;
     }
 
-    Verilated::traceEverOn(true);
     pCore = new Vz80computer();
+
+#ifdef TRACE
+    Verilated::traceEverOn(true);
     opentrace("trace.vcd");
+#endif
 
     uart_init(&pCore->i_uart_rx, &pCore->o_uart_tx, &pCore->i_clk, pCore->z80computer->SYS_FREQ/pCore->z80computer->BAUDRATE);
+    if (disk_init("disk.img", 4) < 0) {
+        fprintf(stderr, "ERROR: Failed to load disk image '%s'\n", "disk.img");
+        return -3;
+    }
 
     reset();
     pCore->i_ack = 1;
 
-    while(tickcount < 1000000*ts && !Verilated::gotFinish()) {
+    while(tickcount < 10000000*ts && !Verilated::gotFinish()) {
         handle(pCore);
     }
 

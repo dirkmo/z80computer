@@ -32,7 +32,7 @@ wire cpu_rd_n;
 wire cpu_wr_n;
 wire cpu_we = ~cpu_wr_n & (~cpu_mreq_n | ~cpu_iorq_n);
 wire cpu_memcs = (~cpu_wr_n || ~cpu_rd_n) && ~cpu_mreq_n;
-wire cpu_iocs = (~cpu_wr_n || ~cpu_rd_n) && (~cpu_iorq_n && cpu_m1_n);
+wire cpu_iocs /* verilator public */ = (~cpu_wr_n || ~cpu_rd_n) && (~cpu_iorq_n && cpu_m1_n);
 wire reset;
 wire cpu_wait;
 wire cpu_ack;
