@@ -29,9 +29,9 @@ void disk_sector_write(uint32_t dts, uint8_t dat) {
     if (dts != g_dts) {
         g_dts = dts;
         g_secpos = 0;
-        printf("write disk: %u, track: $%x, sector: $%x\n", disk, track, sector);
+        // printf("write disk: %u, track: $%x, sector: $%x\n", disk, track, sector);
     }
-    uint32_t addr = sectors_per_track*track+sector+g_secpos;
+    uint32_t addr = (sectors_per_track*track+sector) * 128 + g_secpos;
     assert(addr < disk_size);
     diskbuf[addr] = dat;
     g_secpos = (g_secpos+1) % 128;
@@ -44,9 +44,9 @@ uint8_t disk_sector_read(uint32_t dts) {
     if (dts != g_dts) {
         g_dts = dts;
         g_secpos = 0;
-        printf("read disk: %u, track: $%x, sector: $%x\n", disk, track, sector);
+        // printf("read disk: %u, track: $%x, sector: $%x\n", disk, track, sector);
     }
-    uint32_t addr = sectors_per_track*track+sector+g_secpos;
+    uint32_t addr = (sectors_per_track*track+sector) * 128 + g_secpos;
     assert(addr < disk_size);
     uint8_t dat = diskbuf[addr];
     g_secpos = (g_secpos+1) % 128;

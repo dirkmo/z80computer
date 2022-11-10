@@ -140,6 +140,7 @@ int main(int argc, char *argv[]) {
 #ifdef TRACE
     Verilated::traceEverOn(true);
     opentrace("trace.vcd");
+    printf("Trace enabled.\n");
 #endif
 
     uart_init(&pCore->i_uart_rx, &pCore->o_uart_tx, &pCore->i_clk, pCore->z80computer->SYS_FREQ/pCore->z80computer->BAUDRATE);
@@ -153,8 +154,13 @@ int main(int argc, char *argv[]) {
     reset();
     pCore->i_ack = 1;
 
-    while(tickcount < 10000000*ts && !Verilated::gotFinish()) {
+    while( !Verilated::gotFinish()) {
         handle(pCore);
+#ifdef TRACE
+        if(tickcount > 10000000*ts) {
+            break;
+        }
+#endif
     }
 
     pCore->final();
