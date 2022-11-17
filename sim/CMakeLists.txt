@@ -10,8 +10,7 @@ endif()
 
 set(CMAKE_BUILD_TYPE DEBUG)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}-O0 -g")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -DEDGE_DETECTION=1") # -DTRACE
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -DEDGE_DETECTION=1 -DTRACE") # -DTRACE
 
 # ${PROJECT_SOURCE_DIR}
 
@@ -57,7 +56,7 @@ add_custom_command(OUTPUT test.bin
 )
 
 add_custom_target(sim
-    COMMAND simulation test.bin
+    COMMAND simulation ${CMAKE_BINARY_DIR}/test.bin
     DEPENDS test.bin
     COMMENT "Executing simulation..."
 )

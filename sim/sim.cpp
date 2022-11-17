@@ -68,8 +68,8 @@ void handle_mem(Vz80computer *pCore) {
             }
 #endif
         }
+        pCore->i_ack = 1;
     }
-    pCore->i_ack = pCore->o_cs;
 }
 
 void handle_io(Vz80computer *pCore) {
@@ -89,11 +89,12 @@ void handle_io(Vz80computer *pCore) {
                 pCore->i_dat = disk_sector_read(disk_sector);
             }
         }
+        pCore->i_ack = 1;
     }
-    pCore->i_ack = pCore->z80computer->cpu_iocs;
 }
 
 void handle(Vz80computer *pCore) {
+    pCore->i_ack = 0;
     handle_mem(pCore);
     handle_io(pCore);
     int rxbyte;
@@ -146,18 +147,20 @@ int main(int argc, char *argv[]) {
     uart_init(&pCore->i_uart_rx, &pCore->o_uart_tx, &pCore->i_clk, pCore->z80computer->SYS_FREQ/pCore->z80computer->BAUDRATE);
     if (disk_init("disk.img", 4) < 0) {
         fprintf(stderr, "ERROR: Failed to load disk image '%s'\n", "disk.img");
-        return -3;
+        // return -3;
     }
 
     console_init();
 
     reset();
-    pCore->i_ack = 1;
+    // pCore->i_ack = 1;
+
+    uart_send(1, "L1234W56");
 
     while( !Verilated::gotFinish()) {
         handle(pCore);
 #ifdef TRACE
-        if(tickcount > 10000000*ts) {
+        if(tickcount > 10000*ts) {
             break;
         }
 #endif

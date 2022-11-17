@@ -95,7 +95,7 @@ UartMasterSlave #(.BAUDRATE(BAUDRATE),.SYS_FREQ(SYS_FREQ)) uart(
     .o_slave_data(o_uartslave_dat),
     .i_slave_addr(o_addr[0]),
     .o_slave_ack(o_uartslave_ack),
-    .i_slave_we(i_uartslave_we),
+    .i_slave_we(cpu_we),
     .i_slave_cs(i_uartslave_cs),
     .o_int(o_uart_int),
 
@@ -105,7 +105,6 @@ UartMasterSlave #(.BAUDRATE(BAUDRATE),.SYS_FREQ(SYS_FREQ)) uart(
     .o_reset(o_uart_reset)
 );
 
-assign i_uartslave_we = cpu_we;
 assign i_uartslave_cs = cpu_iocs && (o_cpu_addr[7:1] == 7'd0); // uart-slave on port 0 (status), 1 (rx/tx)
 
 // multi-master handling
@@ -132,8 +131,8 @@ assign           o_cs =   //r_vgamaster_active ? vgamaster_cs :
 wire cpu_ioack = i_uartslave_cs && o_uartslave_ack;
 wire i_cpu_dat = i_uartslave_cs ? o_uartslave_dat : i_dat;
 
-assign cpu_ack      = r_cpumaster_active;// && ((cpu_memcs && i_ack) || cpu_ioack);
-assign uartmaster_ack = ~r_uartmaster_active && uartmaster_cs && i_ack;
+assign cpu_ack      = r_cpumaster_active && ((cpu_memcs == i_ack) || (cpu_iocs == cpu_ioack));
+assign uartmaster_ack = r_uartmaster_active && uartmaster_cs && i_ack;
 
 always @(posedge i_clk)
 begin
