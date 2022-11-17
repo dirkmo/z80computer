@@ -9,7 +9,9 @@ module top(
     output sram_oe,
     output sram_we,
     input i_int,
-    input i_nmi
+    input i_nmi,
+    output uart_tx,
+    input uart_rx
 );
 
 wire [15:0] cpu_addr;

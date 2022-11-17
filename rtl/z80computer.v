@@ -129,7 +129,7 @@ assign           o_cs =   //r_vgamaster_active ? vgamaster_cs :
                           r_cpumaster_active ? cpu_memcs : 0;
 
 wire cpu_ioack = i_uartslave_cs && o_uartslave_ack;
-wire i_cpu_dat = i_uartslave_cs ? o_uartslave_dat : i_dat;
+assign i_cpu_dat = i_uartslave_cs ? o_uartslave_dat : i_dat;
 
 assign cpu_ack      = r_cpumaster_active && ((cpu_memcs == i_ack) || (cpu_iocs == cpu_ioack));
 assign uartmaster_ack = r_uartmaster_active && uartmaster_cs && i_ack;
@@ -150,8 +150,8 @@ end
 
 assign cpu_int = i_int || o_uart_int;
 
-always @(posedge i_clk)
-    if (o_cpu_addr[7:0] == 8'hff && ~cpu_iorq_n)
-        $finish;
+//always @(posedge i_clk)
+//    if (o_cpu_addr[7:0] == 8'hff && ~cpu_iorq_n)
+//        $finish;
 
 endmodule

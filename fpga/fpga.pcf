@@ -33,5 +33,8 @@ set_io dat[5]       R9
 set_io dat[6]       K9
 set_io dat[7]       P9
 
-set_io i_int        E4 # zufällig ausgewählt
-set_io i_nmi        B2 # zufällig ausgewählt
+set_io i_int        F5 # zufällig ausgewählt
+set_io i_nmi        B1 # zufällig ausgewählt
+
+set_io uart_tx      E4
+set_io uart_rx      B2

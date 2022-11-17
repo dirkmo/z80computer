@@ -1,7 +1,10 @@
 PROJ = top
 PIN_DEF = fpga.pcf
 DEVICE = hx8k
-SOURCES = top.v $(wildcard ../rtl/*.v) $(wildcard ../import/tv80/rtl/core/*.v)
+SOURCES = top.v
+SOURCES+=$(wildcard ../rtl/*.v)
+SOURCES+=$(wildcard ../import/uartmaster/rtl/*.v)
+SOURCES+=$(wildcard ../import/tv80/rtl/core/*.v)
 all: $(PROJ).rpt $(PROJ).bin
 
 pll:
