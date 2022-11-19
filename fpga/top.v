@@ -15,7 +15,7 @@ module top(
 );
 
 wire [15:0] cpu_addr;
-reg [7:0] cpu_di;
+wire [7:0] cpu_di;
 wire [7:0] cpu_do;
 wire cpu_wr;
 wire cpu_cs;
@@ -40,5 +40,12 @@ assign sram_cs = cpu_cs;
 assign sram_oe = ~cpu_wr;
 assign sram_we = cpu_wr;
 
+
+always @* begin
+    case(o_addr)
+`include "rom.inc"
+        default: cpu_di = dat;
+    endcase
+end
 
 endmodule
