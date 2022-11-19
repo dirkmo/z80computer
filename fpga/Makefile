@@ -1,20 +1,30 @@
 PROJ = top
 PIN_DEF = fpga.pcf
 DEVICE = hx8k
-SOURCES = top.v
-SOURCES+=$(wildcard ../rtl/*.v)
+SOURCES =$(wildcard ../rtl/*.v)
 SOURCES+=$(wildcard ../import/uartmaster/rtl/*.v)
 SOURCES+=$(wildcard ../import/tv80/rtl/core/*.v)
+SOURCES+=top.v
+
+# Automatic Variables
+# $@ The file name of the target of the rule
+# $< The name of the first prerequisite
+# $^ The names of all the prerequisites
+
+
 all: $(PROJ).rpt $(PROJ).bin
 
 pll:
 	#icepll -i 100 -o 25 -m -f pll.v
 
-%.blif: pll %.v
-	yosys -p 'synth_ice40 -top top -blif $@' $(SOURCES)
+%.json: pll %.v
+	yosys -p synth_ice40 -o $@ $(SOURCES)
 
-%.asc: $(PIN_DEF) %.blif
-	arachne-pnr -d $(subst hx,,$(subst lp,,$(DEVICE))) -o $@ -p $^ -P ct256
+%.asc: $(PIN_DEF) %.json
+	nextpnr-ice40 --top top --$(DEVICE) --json $(basename $@).json --pcf $< --asc $@ --package ct256
+
+sources:
+	echo $(SOURCES)
 
 %.bin: %.asc
 	icepack $< $@

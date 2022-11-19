@@ -16,3 +16,7 @@ sw/os/sys.sym
 sw/os/sys.lst
 sw/os/sys.bin
 sw/os/sim.gtkw
+fpga/top.bin
+fpga/top.rpt
+fpga/top.json
+sw/stuff/

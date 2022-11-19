@@ -3,7 +3,7 @@
 module top(
     input i_clk,
     input i_reset_n,
-    output [15:0] o_addr,
+    output [17:0] o_addr,
     inout  [7:0] dat,
     output sram_cs,
     output sram_oe,
@@ -18,7 +18,8 @@ wire [15:0] cpu_addr;
 reg [7:0] cpu_di;
 wire [7:0] cpu_do;
 wire cpu_wr;
-
+wire cpu_cs;
+wire cpu_we;
 
 z80computer computer(
     .i_clk(i_clk),
@@ -33,7 +34,7 @@ z80computer computer(
     .i_nmi(1'b0)
 );
 
-assign o_addr = cpu_addr;
+assign o_addr = {2'b00, cpu_addr};
 assign dat = cpu_we ? cpu_do : 8'dz;
 assign sram_cs = cpu_cs;
 assign sram_oe = ~cpu_wr;

@@ -27,6 +27,8 @@ bios_dma_addr:  dw 0
 
 
 .go_cpm:
+    call iputs
+    db "CP/M 2.2 starting up...\r\n\0"
 	ld	a,0xc3		; opcode for JP
 	ld	(0),a
 	ld	hl,WBOOT
