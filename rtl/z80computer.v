@@ -12,7 +12,8 @@ module z80computer(
     input i_int,
     input i_nmi,
     input i_uart_rx,
-    output o_uart_tx
+    output o_uart_tx,
+    output reg o_led2
 );
 
 parameter
@@ -59,8 +60,8 @@ tv80s #(.Mode(1), .T2Write(1), .IOWait(0)) cpu0 (
   .do(o_cpu_dat),
   .di(i_cpu_dat),
   .wait_n(~cpu_wait),
-  .int_n(~cpu_int),
-  .nmi_n(~i_nmi),
+  .int_n(1'b1), //~cpu_int),
+  .nmi_n(1'b1), //~i_nmi),
   .busrq_n(1'b1)
 );
 
@@ -107,6 +108,14 @@ UartMasterSlave #(.BAUDRATE(BAUDRATE),.SYS_FREQ(SYS_FREQ)) uart(
 
 assign i_uartslave_cs = cpu_iocs && (o_cpu_addr[7:1] == 7'd0); // uart-slave on port 0 (status), 1 (rx/tx)
 
+// led
+wire led2_cs = cpu_iocs && (o_cpu_addr[7:0] == 8'h10);
+always @(posedge i_clk) begin
+    if (led2_cs) begin
+        o_led2 <= o_cpu_dat[0];
+    end
+end
+
 // multi-master handling
 
 assign reset = o_uart_reset || i_reset;
@@ -150,8 +159,10 @@ end
 
 assign cpu_int = i_int || o_uart_int;
 
-//always @(posedge i_clk)
-//    if (o_cpu_addr[7:0] == 8'hff && ~cpu_iorq_n)
-//        $finish;
+`ifdef SIM
+always @(posedge i_clk)
+   if (o_cpu_addr[7:0] == 8'hff && ~cpu_iorq_n)
+       $finish;
+`endif
 
 endmodule

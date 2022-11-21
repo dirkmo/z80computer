@@ -10,7 +10,8 @@ endif()
 
 set(CMAKE_BUILD_TYPE DEBUG)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -DEDGE_DETECTION=1 -DTRACE") # -DTRACE
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -DEDGE_DETECTION=1")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRACE")
 
 # ${PROJECT_SOURCE_DIR}
 
@@ -42,6 +43,7 @@ verilate(simulation TRACE
                 -x-assign 0
                 +librescan
                 +libext+.v
+                +define+SIM
 
     TOP_MODULE  z80computer
 

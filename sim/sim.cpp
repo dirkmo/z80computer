@@ -53,7 +53,7 @@ void reset() {
 void handle_mem(Vz80computer *pCore) {
     if (pCore->o_cs && !pCore->z80computer->cpu_iocs) {
         if (pCore->o_we) {
-#ifdef _DEBUG_PRINTS
+#if defined(_DEBUG_PRINTS)
             if (pCore->z80computer->cpu_opcode_fetch_n) {
                 printf("write %04x = %02x\n", pCore->o_addr, pCore->o_dat);
             }
@@ -62,7 +62,7 @@ void handle_mem(Vz80computer *pCore) {
             pCore->i_dat = 0;
         } else {
             pCore->i_dat = mem[pCore->o_addr];
-#ifdef _DEBUG_PRINTS
+#if defined(_DEBUG_PRINTS)
             if (pCore->z80computer->cpu_opcode_fetch_n) {
                 printf("read %04x = %02x\n", pCore->o_addr, pCore->i_dat);
             }
@@ -129,7 +129,7 @@ int program_load(const char *fn, uint16_t offset) {
 }
 
 int main(int argc, char *argv[]) {
-    printf("z80-computer simulator\n\n");
+    printf("z80-computer simulator\n");
 
     if (program_load(argv[1], 0)) {
         fprintf(stderr, "ERROR: Failed to load program file '%s'\n", argv[1]);
@@ -157,10 +157,11 @@ int main(int argc, char *argv[]) {
 
     uart_send(1, "L1234W56");
 
+    printf("-------\n");
     while( !Verilated::gotFinish()) {
         handle(pCore);
 #ifdef TRACE
-        if(tickcount > 10000*ts) {
+        if(tickcount > 100000*ts) {
             break;
         }
 #endif
