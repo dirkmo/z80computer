@@ -7,17 +7,23 @@ if (NOT verilator_FOUND)
   message(FATAL_ERROR "Verilator was not found. Either install it, or set the VERILATOR_ROOT environment variable")
 endif()
 
+option(TRACE "ON or OFF" OFF)
 
 set(CMAKE_BUILD_TYPE DEBUG)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -DEDGE_DETECTION=1")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTRACE")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
 
 # ${PROJECT_SOURCE_DIR}
 
 add_executable(simulation sim.cpp ../import/uartmaster/sim/uart.cpp console.cpp disk.cpp)
 
 target_include_directories(simulation PUBLIC ../import/uartmaster/sim)
+target_compile_definitions(simulation PUBLIC EDGE_DETECTION)
+
+if(TRACE)
+target_compile_definitions(simulation PUBLIC TRACE)
+endif()
+
 
 message(STATUS "${PROJECT_SOURCE_DIR}/../rtl")
 
@@ -28,7 +34,7 @@ verilate(simulation TRACE
                 ../import/tv80/rtl/core/tv80_core.v
                 ../import/tv80/rtl/core/tv80_mcode.v
                 ../import/tv80/rtl/core/tv80_reg.v
-                ../import/tv80/rtl/core/tv80s.v
+                ../import/tv80/rtl/core/tv80n.v
                 ../import/uartmaster/rtl/fifo.v
                 ../import/uartmaster/rtl/UartMasterSlave.v
                 ../import/uartmaster/rtl/UartProtocol.v
@@ -52,7 +58,7 @@ verilate(simulation TRACE
 
 add_custom_command(OUTPUT test.bin
     COMMAND z80asm --list=test.lst --label=test.sym -o test.bin ${PROJECT_SOURCE_DIR}/test.asm
-	COMMAND hexdump -ve '1/1 \"%.2x \"' test.bin > test.mem
+	COMMAND hexdump -ve '1/1 \"%02x \"' test.bin > test.mem
     DEPENDS test.asm
     COMMENT "Assembling test program"
 )

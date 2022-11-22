@@ -1,3 +1,4 @@
+
 PROJ = top
 PIN_DEF = fpga.pcf
 DEVICE = hx8k
@@ -21,7 +22,7 @@ pll.v:
 	yosys -p synth_ice40 -o $@ $(SOURCES)
 
 %.asc: $(PIN_DEF) %.json
-	nextpnr-ice40 --freq 25 --top top --$(DEVICE) --json $(basename $@).json --pcf $< --asc $@ --package ct256
+	nextpnr-ice40 --top top --$(DEVICE) --json $(basename $@).json --pcf $< --asc $@ --package ct256 --freq 25
 
 %.bin: %.asc
 	icepack $< $@
@@ -32,11 +33,8 @@ pll.v:
 prog: $(PROJ).bin
 	iceprogduino $<
 
-sudo-prog: $(PROJ).bin
-	@echo 'Executing prog as root!!!'
-	sudo iceprogduino $<
-
 clean:
 	rm -f $(PROJ).asc $(PROJ).bin $(PROJ).rpt $(PROJ).json
 
-.PHONY: all prog clean pll
+.SECONDARY: %.asc %.json
+.PHONY: all prog clean
