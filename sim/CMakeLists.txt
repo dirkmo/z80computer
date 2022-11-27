@@ -7,7 +7,7 @@ if (NOT verilator_FOUND)
   message(FATAL_ERROR "Verilator was not found. Either install it, or set the VERILATOR_ROOT environment variable")
 endif()
 
-option(TRACE "ON or OFF" OFF)
+option(TRACE "ON or OFF" ON)
 
 set(CMAKE_BUILD_TYPE DEBUG)
 
@@ -29,12 +29,14 @@ message(STATUS "${PROJECT_SOURCE_DIR}/../rtl")
 
 # Add the Verilated circuit to the target
 verilate(simulation TRACE
-    SOURCES     ../rtl/z80computer.v
+    SOURCES     ../fpga/top.v
+                ../rtl/z80computer.v
                 ../import/tv80/rtl/core/tv80_alu.v
                 ../import/tv80/rtl/core/tv80_core.v
                 ../import/tv80/rtl/core/tv80_mcode.v
                 ../import/tv80/rtl/core/tv80_reg.v
                 ../import/tv80/rtl/core/tv80n.v
+                ../import/tv80/rtl/core/tv80s.v
                 ../import/uartmaster/rtl/fifo.v
                 ../import/uartmaster/rtl/UartMasterSlave.v
                 ../import/uartmaster/rtl/UartProtocol.v
@@ -44,14 +46,13 @@ verilate(simulation TRACE
     VERILATOR_ARGS
                 --language 1364-2005
                 --no-timing
-                -CFLAGS "-g"
-                -O0
-                -x-assign 0
-                +librescan
-                +libext+.v
                 +define+SIM
+#                -Wall
+#                +librescan
+#                +libext+.v
+#                -CFLAGS "-g" -O0
 
-    TOP_MODULE  z80computer
+    TOP_MODULE  top
 
     THREADS 8
   )

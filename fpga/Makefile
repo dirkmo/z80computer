@@ -5,7 +5,8 @@ DEVICE = hx8k
 SOURCES =$(wildcard ../rtl/*.v)
 SOURCES+=$(wildcard ../import/uartmaster/rtl/*.v)
 SOURCES+=$(wildcard ../import/tv80/rtl/core/*.v)
-SOURCES+=pll.v top.v
+#SOURCES+=pll.v
+SOURCES+=top.v
 
 # Automatic Variables
 # $@ The file name of the target of the rule

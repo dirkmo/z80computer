@@ -20,3 +20,7 @@ fpga/top.bin
 fpga/top.rpt
 fpga/top.json
 sw/stuff/
+fpga/top.asc
+fpga/rom.inc
+fpga/pll.v
+fpga/test.mem

@@ -58,7 +58,7 @@ int disk_init(const char *fn, uint16_t spt) {
     sectors_per_track = spt;
     FILE *f = fopen(fn, "r");
     if (f == NULL) {
-        fprintf(stderr, "ERROR: %s\n", strerror(errno));
+        fprintf(stderr, "%s: %s\n", __func__, strerror(errno));
         return -1;
     }
     fseek(f, 0, SEEK_END);
