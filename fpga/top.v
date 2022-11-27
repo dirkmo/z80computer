@@ -26,7 +26,7 @@ wire cpu_we;
 wire cpu_cs;
 wire cpu_ack;
 
-wire clk25mhz;
+wire clk25mhz /* verilator public */;
 
 reg [2:0] resetn_counter = 0;
 wire resetn = &resetn_counter;
@@ -65,8 +65,11 @@ assign dat = cpu_we ? cpu_do : 8'dz;
 assign sram_cs_n = ~cpu_cs;
 assign sram_oe_n = cpu_we;
 assign sram_we_n = ~cpu_we;
+wire cpu_ack = 1'b1;
 
-reg [11:0] waitcnt = 0;
+
+`ifdef WAIT
+reg [19:0] waitcnt = 0;
 assign cpu_ack = &waitcnt;
 always @(posedge clk25mhz) begin
     if (cpu_cs) begin
@@ -77,7 +80,7 @@ always @(posedge clk25mhz) begin
         waitcnt <= 0;
     end
 end
-
+`endif
 
 always @* begin
     case(cpu_addr[15:0])

@@ -19,7 +19,7 @@ module z80computer(
 );
 
 parameter
-    BAUDRATE /* verilator public */ = 1152000,
+    BAUDRATE /* verilator public */ = 115200,
     SYS_FREQ /* verilator public */ = 25000000;
 
 // wire vgamaster_access;

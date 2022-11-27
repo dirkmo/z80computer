@@ -3,7 +3,7 @@
 #include <ctype.h>
 #include <verilated_vcd_c.h>
 #include "verilated.h"
-#include "Vtop_z80computer__B1c200.h"
+#include "Vtop_z80computer.h"
 #include "Vtop_top.h"
 #include "Vtop.h"
 
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
     printf("Trace enabled.\n");
 #endif
 
-    uart_init(&pCore->uart_rx, &pCore->uart_tx, &pCore->i_clk100mhz, pCore->top->computer->SYS_FREQ/pCore->top->computer->BAUDRATE);
+    uart_init(&pCore->uart_rx, &pCore->uart_tx, &pCore->top->clk25mhz, pCore->top->computer->SYS_FREQ/pCore->top->computer->BAUDRATE);
     if (disk_init("disk.img", 4) < 0) {
         fprintf(stderr, "ERROR: Failed to load disk image '%s'\n", "disk.img");
         // return -3;
