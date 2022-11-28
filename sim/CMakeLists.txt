@@ -18,7 +18,7 @@ set(CMAKE_BUILD_TYPE DEBUG)
 add_executable(simulation sim.cpp ../import/uartmaster/sim/uart.cpp console.cpp disk.cpp)
 
 target_include_directories(simulation PUBLIC ../import/uartmaster/sim)
-target_compile_definitions(simulation PUBLIC EDGE_DETECTION)
+# target_compile_definitions(simulation PUBLIC EDGE_DETECTION)
 
 if(TRACE)
 target_compile_definitions(simulation PUBLIC TRACE)

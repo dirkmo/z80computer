@@ -24,3 +24,5 @@ fpga/top.asc
 fpga/rom.inc
 fpga/pll.v
 fpga/test.mem
+fpga/rom.bin
+fpga/rom.mem

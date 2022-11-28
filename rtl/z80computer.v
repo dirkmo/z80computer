@@ -47,7 +47,7 @@ wire halt_n;
 
 wire reset;
 
-tv80s #(.Mode(0), .T2Write(1), .IOWait(0)) cpu0 (
+tv80n #(.Mode(1), .T2Write(1), .IOWait(0)) cpu0 (
   .clk(i_clk),
   .reset_n(~reset),
 
