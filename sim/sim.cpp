@@ -23,6 +23,8 @@ uint64_t clockcycle_ps = 10000; // clock cycle length in ps
 
 uint8_t mem[0x10000];
 
+bool posedge_clk25mhz = false;
+
 void opentrace(const char *vcdname) {
     if (!pTrace) {
         pTrace = new VerilatedVcdC;
@@ -54,8 +56,8 @@ void reset() {
 
 void handle_mem(Vtop *pCore) {
     static int ackcnt = 0;
-    if (pCore->sram_cs_n) {
-        if (pCore->sram_we_n) {
+    if (!pCore->sram_cs_n) {
+        if (!pCore->sram_we_n) {
 #if defined(_DEBUG_PRINTS)
             if (pCore->z80computer->cpu_opcode_fetch_n) {
                 printf("write %04x = %02x\n", pCore->o_addr, pCore->o_dat);
@@ -82,8 +84,8 @@ void handle(Vtop *pCore) {
         fflush(stdout);
     }
 #ifdef _DEBUG_PRINTS
-    if (!pCore->z80computer->cpu_opcode_fetch_n) {
-        printf("OP %04x\n", pCore->o_addr);
+    if (!pCore->top->computer->cpu_opcode_fetch_n) {
+        printf("OP %04x: %02x\n", pCore->o_addr, pCore->dat);
     }
 #endif
     unsigned char ch = console_getc();
