@@ -55,7 +55,6 @@ void reset() {
 }
 
 void handle_mem(Vtop *pCore) {
-    static int ackcnt = 0;
     if (!pCore->sram_cs_n) {
         if (!pCore->sram_we_n) {
 #if defined(_DEBUG_PRINTS)
@@ -80,7 +79,7 @@ void handle(Vtop *pCore) {
     handle_mem(pCore);
     int rxbyte;
     if (uart_handle(&rxbyte)) {
-        printf("%c", rxbyte);
+        printf("%c", (char)(rxbyte & 0x7f));
         fflush(stdout);
     }
 #ifdef _DEBUG_PRINTS
@@ -135,13 +134,14 @@ int main(int argc, char *argv[]) {
 
     reset();
 
-    uart_send(1, "L1234W56");
+    uart_send(1, "La2f4W5b");
+    uart_send(1, "La2f4R");
 
     printf("-------\n");
-    while( !Verilated::gotFinish()) {
+    while( 1 || !Verilated::gotFinish()) {
         handle(pCore);
 #ifdef TRACE
-        if(tickcount > 100000*clockcycle_ps) {
+        if(tickcount > 200000*clockcycle_ps) {
             break;
         }
 #endif

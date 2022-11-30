@@ -50,4 +50,4 @@ uart_putc: ; c: char to send
     out (PORT_UART_TX), a
     ret
 
-msg: db "Hallo Welt!",13,10,0
+msg: db "Hallo Welt!",13,10,13,10,0
