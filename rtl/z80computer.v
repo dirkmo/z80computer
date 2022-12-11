@@ -14,6 +14,10 @@ module z80computer(
     input i_nmi,
     input i_uart_rx,
     output o_uart_tx,
+    input i_miso,
+    output o_mosi,
+    output o_sck,
+    output o_ss,
     output reg o_led1,
     output reg o_led2
 );
@@ -79,7 +83,7 @@ wire [7:0] o_uartslave_dat;
 wire [7:0] i_uartslave_dat;
 wire o_uartslave_ack;
 wire i_uartslave_we;
-wire i_uartslave_cs;
+reg uartslave_cs;
 
 wire o_uart_reset;
 wire o_uart_int;
@@ -100,7 +104,7 @@ UartMasterSlave #(.BAUDRATE(BAUDRATE),.SYS_FREQ(SYS_FREQ)) uart(
     .i_slave_addr(o_addr[0]),
     .o_slave_ack(o_uartslave_ack),
     .i_slave_we(cpu_we),
-    .i_slave_cs(i_uartslave_cs),
+    .i_slave_cs(uartslave_cs),
     .o_int(o_uart_int),
 
     .i_uart_rx(i_uart_rx),
@@ -109,8 +113,40 @@ UartMasterSlave #(.BAUDRATE(BAUDRATE),.SYS_FREQ(SYS_FREQ)) uart(
     .o_reset(o_uart_reset)
 );
 
-assign i_uartslave_cs = cpu_iocs && (o_cpu_addr[7:1] == 7'd0); // uart-slave on port 0 (status), 1 (rx/tx)
+reg spi_cs;
+wire [7:0] spi_dat;
+wire spi_irq;
 
+spi spi0(
+    .i_clk(i_clk),
+    .i_reset(i_reset),
+
+    .i_addr(o_addr[0]),
+    .i_cs(spi_cs),
+    .i_we(cpu_we),
+    .i_dat(o_dat),
+    .o_dat(spi_dat),
+
+    .i_miso(i_miso),
+    .o_mosi(o_mosi),
+    .o_sck(o_sck),
+    .o_ss(o_ss),
+
+    .o_irq(spi_irq)
+
+);
+
+// slave addresses
+always @(*) begin
+    uartslave_cs = 0;
+    spi_cs = 0;
+    if (cpu_iocs) begin
+        case (o_cpu_addr[7:0])
+            0,1: uartslave_cs = 1;
+            2,3: spi_cs = 1;
+        endcase
+    end
+end
 
 
 // multi-master handling
@@ -133,8 +169,8 @@ assign           o_cs =   //r_vgamaster_active ? vgamaster_cs :
                          r_uartmaster_active ? uartmaster_cs :
                           r_cpumaster_active ? cpu_memcs : 0;
 
-wire cpu_ioack = i_uartslave_cs && o_uartslave_ack;
-assign i_cpu_dat = i_uartslave_cs ? o_uartslave_dat : i_dat;
+wire cpu_ioack = uartslave_cs && o_uartslave_ack;
+assign i_cpu_dat = uartslave_cs ? o_uartslave_dat : i_dat;
 
 assign cpu_ack      = r_cpumaster_active && ((cpu_memcs == i_ack) || (cpu_iocs == cpu_ioack));
 assign uartmaster_ack = r_uartmaster_active && uartmaster_cs && i_ack;

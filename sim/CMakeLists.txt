@@ -42,6 +42,7 @@ verilate(simulation TRACE
                 ../import/uartmaster/rtl/UartProtocol.v
                 ../import/uartmaster/rtl/uart_rx.v
                 ../import/uartmaster/rtl/uart_tx.v
+                ../import/spi/rtl/spi.v
 
     VERILATOR_ARGS
                 --language 1364-2005

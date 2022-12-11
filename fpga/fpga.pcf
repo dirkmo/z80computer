@@ -43,6 +43,11 @@ set_io i_nmi        B1 # zufällig ausgewählt
 set_io uart_tx      E4
 set_io uart_rx      B2
 
+# i_miso
+# o_mosi
+# o_sck
+# o_ss
+
 set_io o_led1       M12
 set_io o_led2       R16
 #set_io i_but2       P13

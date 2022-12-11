@@ -4,3 +4,6 @@
 [submodule "import/uartmaster"]
 	path = import/uartmaster
 	url = https://github.com/dirkmo/uartmaster
+[submodule "import/spi"]
+	path = import/spi
+	url = https://github.com/dirkmo/spi

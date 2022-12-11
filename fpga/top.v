@@ -15,6 +15,12 @@ module top(
     input i_nmi,
     output uart_tx,
     input uart_rx,
+
+    input i_miso,
+    output o_mosi,
+    output o_sck,
+    output o_ss,
+
     output o_led1,
     output o_led2
 );
@@ -56,6 +62,10 @@ z80computer #(.BAUDRATE(115200),.SYS_FREQ(25000000)) computer(
     .i_nmi(1'b0),
     .i_uart_rx(uart_rx),
     .o_uart_tx(uart_tx),
+    .i_miso(i_miso),
+    .o_mosi(o_mosi),
+    .o_sck(o_sck),
+    .o_ss(o_ss),
     .o_led1(o_led1),
     .o_led2(o_led2)
 );
