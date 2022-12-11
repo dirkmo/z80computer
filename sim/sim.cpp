@@ -3,9 +3,8 @@
 #include <ctype.h>
 #include <verilated_vcd_c.h>
 #include "verilated.h"
-#include "Vtop_z80computer.h"
-#include "Vtop_top.h"
-#include "Vtop.h"
+#include "Vz80computer.h"
+#include "Vz80computer_z80computer.h"
 
 #include "uart.h"
 #include "console.h"
@@ -13,10 +12,7 @@
 
 //#define _DEBUG_PRINTS
 
-#define PORT_DISK_CFG 2
-#define PORT_DISK_IO  3
-
-Vtop *pCore;
+Vz80computer *pCore;
 VerilatedVcdC *pTrace = NULL;
 uint64_t tickcount = 0;
 uint64_t clockcycle_ps = 10000; // clock cycle length in ps
@@ -35,13 +31,13 @@ void opentrace(const char *vcdname) {
 
 void tick(int t = 3) {
     if (t&1) {
-        pCore->i_clk100mhz = 1;
+        pCore->i_clk = 1;
         pCore->eval();
         if(pTrace) pTrace->dump(static_cast<vluint64_t>(tickcount));
         tickcount += clockcycle_ps / 2;
     }
     if (t&2) {
-        pCore->i_clk100mhz = 0;
+        pCore->i_clk = 0;
         pCore->eval();
         if(pTrace) pTrace->dump(static_cast<vluint64_t>(tickcount));
         tickcount += clockcycle_ps / 2;
@@ -49,42 +45,47 @@ void tick(int t = 3) {
 }
 
 void reset() {
-    pCore->i_reset_n = 0;
+    pCore->i_reset = 1;
     tick();
-    pCore->i_reset_n = 1;
+    tick();
+    tick();
+    pCore->i_reset = 0;
 }
 
-void handle_mem(Vtop *pCore) {
-    if (!pCore->sram_cs_n) {
-        if (!pCore->sram_we_n) {
+void handle_mem(Vz80computer *pCore) {
+    if (pCore->o_cs) {
+        if (pCore->o_we) {
 #if defined(_DEBUG_PRINTS)
             if (pCore->z80computer->cpu_opcode_fetch_n) {
                 printf("write %04x = %02x\n", pCore->o_addr, pCore->o_dat);
             }
 #endif
-            mem[pCore->o_addr] = pCore->dat;
+            mem[pCore->o_addr] = pCore->o_dat;
         } else {
-            pCore->dat = mem[pCore->o_addr];
+            pCore->i_dat = mem[pCore->o_addr];
 #if defined(_DEBUG_PRINTS)
             if (pCore->z80computer->cpu_opcode_fetch_n) {
                 printf("read %04x = %02x\n", pCore->o_addr, pCore->i_dat);
             }
 #endif
         }
+        pCore->i_ack = 1;
+    } else {
+        pCore->i_ack = 0;
     }
 }
 
 
-void handle(Vtop *pCore) {
+void handle(Vz80computer *pCore) {
     handle_mem(pCore);
     int rxbyte;
     if (uart_handle(&rxbyte)) {
         printf("%c", (char)(rxbyte & 0x7f));
         fflush(stdout);
     }
-#ifdef _DEBUG_PRINTS
-    if (!pCore->top->computer->cpu_opcode_fetch_n) {
-        printf("OP %04x: %02x\n", pCore->o_addr, pCore->dat);
+#if defined(_DEBUG_PRINTS)
+    if (!pCore->z80computer->cpu_opcode_fetch_n) {
+        printf("OP %04x: %02x\n", pCore->o_addr, pCore->i_dat);
     }
 #endif
     unsigned char ch = console_getc();
@@ -116,7 +117,7 @@ int main(int argc, char *argv[]) {
         return -2;
     }
 
-    pCore = new Vtop();
+    pCore = new Vz80computer();
 
 #ifdef TRACE
     Verilated::traceEverOn(true);
@@ -124,7 +125,7 @@ int main(int argc, char *argv[]) {
     printf("Trace enabled.\n");
 #endif
 
-    uart_init(&pCore->uart_rx, &pCore->uart_tx, &pCore->top->clk25mhz, pCore->top->computer->SYS_FREQ/pCore->top->computer->BAUDRATE);
+    uart_init(&pCore->i_uart_rx, &pCore->o_uart_tx, &pCore->z80computer->i_clk, pCore->z80computer->SYS_FREQ/pCore->z80computer->BAUDRATE);
     if (disk_init("disk.img", 4) < 0) {
         fprintf(stderr, "ERROR: Failed to load disk image '%s'\n", "disk.img");
         // return -3;
@@ -134,14 +135,15 @@ int main(int argc, char *argv[]) {
 
     reset();
 
-    uart_send(1, "La2f4W5b");
-    uart_send(1, "La2f4R");
+    // uart_send(1, "La2f4W5b");
+    // uart_send(1, "La2f4R");
 
     printf("-------\n");
-    while( 1 || !Verilated::gotFinish()) {
+    while(!Verilated::gotFinish()) {
         handle(pCore);
 #ifdef TRACE
-        if(tickcount > 200000*clockcycle_ps) {
+        if(tickcount > 10000*clockcycle_ps) {
+            printf("timeout\n");
             break;
         }
 #endif

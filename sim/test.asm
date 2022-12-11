@@ -1,16 +1,4 @@
-; UART ports
-PORT_UART_ST:           equ 0
-PORT_UART_RX:           equ 1
-PORT_UART_TX:           equ 1
-
-; UART_ST bit definitions
-BIT_UART_ST_RXEMPTY:    equ 1
-BIT_UART_ST_RXFULL:     equ 2
-BIT_UART_ST_TXEMPTY:    equ 4
-BIT_UART_ST_TXFULL:     equ 8
-
-PORT_LEDS:              equ 0x10
-
+include "defs.asm"
 
     org 0
 
@@ -31,23 +19,7 @@ end:
     out (PORT_LEDS),a
     jp end
 
-uart_wait_tx_empty:
-    push af
-uart_wait_tx_empty_loop:
-    in a, (PORT_UART_ST)
-    and 4 ; 4: fifo_tx_empty
-    cp 4
-    jr nz, uart_wait_tx_empty_loop
-    pop af
-    ret
+include "spi.asm"
+include "uart.asm"
 
-uart_putc: ; c: char to send
-    ; destroys af
-    in a, (PORT_UART_ST)
-    and BIT_UART_ST_TXFULL
-    jr nz, uart_putc
-    ld a,c
-    out (PORT_UART_TX), a
-    ret
-
-msg: db "Hallo Welt!",13,10,13,10,0
+msg: db "Hallo SPI!",13,10,13,10,0

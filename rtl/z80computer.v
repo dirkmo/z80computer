@@ -23,7 +23,7 @@ module z80computer(
 );
 
 parameter
-    BAUDRATE /* verilator public */ = 115200,
+    BAUDRATE /* verilator public */ = 1152000,
     SYS_FREQ /* verilator public */ = 25000000;
 
 // wire vgamaster_access;
@@ -51,7 +51,8 @@ wire halt_n;
 
 wire reset;
 
-tv80n #(.Mode(1), .T2Write(1), .IOWait(0)) cpu0 (
+// tv80n: on write, data is output half clk cycle later than address
+tv80s #(.Mode(1), .T2Write(1), .IOWait(0)) cpu0 (
   .clk(i_clk),
   .reset_n(~reset),
 

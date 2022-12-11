@@ -18,19 +18,19 @@ set(CMAKE_BUILD_TYPE DEBUG)
 add_executable(simulation sim.cpp ../import/uartmaster/sim/uart.cpp console.cpp disk.cpp)
 
 target_include_directories(simulation PUBLIC ../import/uartmaster/sim)
-# target_compile_definitions(simulation PUBLIC EDGE_DETECTION)
+target_compile_definitions(simulation PUBLIC EDGE_DETECTION)
 
 if(TRACE)
 target_compile_definitions(simulation PUBLIC TRACE)
 endif()
 
+target_compile_definitions(simulation PUBLIC SIM)
 
 message(STATUS "${PROJECT_SOURCE_DIR}/../rtl")
 
 # Add the Verilated circuit to the target
 verilate(simulation TRACE
-    SOURCES     ../fpga/top.v
-                ../rtl/z80computer.v
+    SOURCES     ../rtl/z80computer.v
                 ../import/tv80/rtl/core/tv80_alu.v
                 ../import/tv80/rtl/core/tv80_core.v
                 ../import/tv80/rtl/core/tv80_mcode.v
@@ -53,13 +53,13 @@ verilate(simulation TRACE
 #                +libext+.v
 #                -CFLAGS "-g" -O0
 
-    TOP_MODULE  top
+    TOP_MODULE  z80computer
 
     THREADS 8
   )
 
 add_custom_command(OUTPUT test.bin
-    COMMAND z80asm --list=test.lst --label=test.sym -o test.bin ${PROJECT_SOURCE_DIR}/test.asm
+    COMMAND z80asm --list=test.lst --label=test.sym -I${PROJECT_SOURCE_DIR} -o test.bin ${PROJECT_SOURCE_DIR}/test.asm
 	COMMAND hexdump -ve '1/1 \"%02x \"' test.bin > test.mem
     DEPENDS test.asm
     COMMENT "Assembling test program"
