@@ -111,6 +111,7 @@ def cmd17(addr, echo=True):
 
 
 def cmd24(addr, blockdata, echo=True):
+    assert(len(blockdata)==512)
     # data write
     ab = [(addr >> 24) & 0xff, (addr >> 16) & 0xff, (addr >> 8) & 0xff, addr & 0xff]
     data = gen_cmd(24, ab)
@@ -118,21 +119,46 @@ def cmd24(addr, blockdata, echo=True):
         sys.stdout.write(f"CMD{data[0]&0x3f} ")
         for d in data:
             sys.stdout.write(f'{d:02x} ')
-        print()
     spi.cs = True
     spi.transfer(bytes(data))
-    rsp = spi.transfer(bytes([0xff]*2)) # r1 and dummy byte
-    print(f"rsp: {rsp}")
-
-    spi.transfer(bytes(blockdata))
-
+    rsp = spi.transfer(bytes([0xff]*3)) # r1 and dummy byte
+    if echo:
+        sys.stdout.write("R: ")
+        for r in rsp:
+            sys.stdout.write(f"{r:02x} ")
+        print()
+    # prefix data with start block token 0xfe (spec 7.3.3.2)
+    spi.transfer(bytes([0xfe]))
+    # send data
+    for i in range(512//16):
+        spi.transfer(bytes(blockdata[i*16:(i+1)*16]))
+    # receive crc
+    crc = spi.transfer(bytes([0xff,0xff])) # always ff when crc disabled (?)
+    if echo:
+        sys.stdout.write("crc: ")
+        for c in crc:
+            sys.stdout.write(f"{c:02x} ")
+    # receive response token (7.3.3.1): xxx0sss1
     rsp = spi.transfer(bytes([0xff]))
-    print(f"rsp: {rsp}")
-    if rsp[0] != 0:
-        return None
-    # busy wait while card is writing
-    while spi.transfer(bytes([0xff])) != 0xff:
-        pass
+    if rsp[0] & 0x1f != 5:
+        return None # data rejected from card
+    if echo:
+        sys.stdout.write("R: ")
+        for r in rsp:
+            sys.stdout.write(f"{r:02x} ")
+        print()
+
+    # poll busy
+    busy = 0
+    if echo:
+        sys.stdout.write("busy poll: ")
+    while busy != 0xff:
+        busy = spi.transfer(bytes([0xff]))[0]
+        if echo:
+            sys.stdout.write(f"{busy:02x} ")
+    if echo:
+        print()
+
     spi.cs = False
 
 
@@ -189,11 +215,23 @@ def main():
         else:
             print(f"Standard SD card (ccs={ccs})")
 
-    datablock = cmd17(0)
+    # read
+    datablock = cmd17(0x10000)
+    assert(len(datablock) == 512)
     print("Data block:")
     for d in datablock:
         sys.stdout.write(f"{d:02x} ")
     print()
+
+    block = []
+    for b in datablock:
+        block.append(int(b))
+
+    block[0] = block[0] + 1
+    block[511] = block[511] + 2
+
+    # write
+    cmd24(0x10000, block, echo=True)
 
     return 0
 
