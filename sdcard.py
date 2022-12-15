@@ -1,5 +1,24 @@
 #!/usr/bin/env python3
 
+# this script demonstrates how to access a SD card with a Bus Pirate.
+
+
+# According to SD specs version 9.00 August 22, 2022
+
+# CMD     Argument                Resp    Abbreviation        Description
+# CMD0    [31:0] stuff bits       R1      GO_IDLE_STATE       Reset Memory Card
+# CMD8    [11:8] Supply voltage
+#         (VHS)
+#         [7:0] check pattern     R7      SEND_IF_COND        Host supply voltage
+# CMD17   [31:0] address          R1      READ_SINGLE_BLOCK   Read a block
+# CMD18   [31:0] address          R1      READ_MULTIPLE_BLOCK Continuously read blocks until STOP_TRANSMISSION cmd
+# CMD24   [31:0] address          R1      WRITE_BLOCK         Write a block
+# CMD55   [31:0] stuff bits       R1      APP_CMD             Next command is app specific command
+# CMD58   [31:0] stuff bits       R3      READ_OCR            Reads OCR register. CCS bit OCR[30]
+# ACMD13  [31:0] stuff bits       R2      SD_STATUS           SD Status (Table 4-44)
+# ACMD41  [30] HCS, other bits 0  R1      SD_SEND_OP_COND     Sends host capacity support info and active init process
+
+
 import sys
 import libscrc
 from pyBusPirateLite.SPI import SPI
