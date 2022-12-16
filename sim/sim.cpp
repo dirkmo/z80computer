@@ -8,7 +8,8 @@
 
 #include "uart.h"
 #include "console.h"
-#include "disk.h"
+#include "spislave.h"
+#include "sdcard.h"
 
 //#define _DEBUG_PRINTS
 
@@ -83,6 +84,13 @@ void handle(Vz80computer *pCore) {
         printf("%c", (char)(rxbyte & 0x7f));
         fflush(stdout);
     }
+    int spibyte = spislave_handle();
+    if (spibyte >= 0) {
+        int sdout = sdcard_handle(spibyte);
+        if (sdout >= 0) {
+            spislave_set_miso((uint8_t)sdout);
+        }
+    }
 #if defined(_DEBUG_PRINTS)
     if (!pCore->z80computer->cpu_opcode_fetch_n) {
         printf("OP %04x: %02x\n", pCore->o_addr, pCore->i_dat);
@@ -126,12 +134,14 @@ int main(int argc, char *argv[]) {
 #endif
 
     uart_init(&pCore->i_uart_rx, &pCore->o_uart_tx, &pCore->z80computer->i_clk, pCore->z80computer->SYS_FREQ/pCore->z80computer->BAUDRATE);
-    if (disk_init("disk.img", 4) < 0) {
-        fprintf(stderr, "ERROR: Failed to load disk image '%s'\n", "disk.img");
-        // return -3;
-    }
+    // if (disk_init("disk.img", 4) < 0) {
+    //     fprintf(stderr, "ERROR: Failed to load disk image '%s'\n", "disk.img");
+    //     // return -3;
+    // }
 
     console_init();
+
+    spislave_init(&pCore->o_sck, &pCore->i_miso, &pCore->o_mosi, &pCore->o_ss);
 
     reset();
 

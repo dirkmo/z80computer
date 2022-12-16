@@ -15,9 +15,18 @@ set(CMAKE_BUILD_TYPE DEBUG)
 
 # ${PROJECT_SOURCE_DIR}
 
-add_executable(simulation sim.cpp ../import/uartmaster/sim/uart.cpp console.cpp disk.cpp)
+add_executable(simulation
+    sim.cpp
+    console.cpp
+    sdcard.cpp
+    ../import/uartmaster/sim/uart.cpp
+    ../import/spi/sim/spislave.cpp
+)
 
-target_include_directories(simulation PUBLIC ../import/uartmaster/sim)
+target_include_directories(simulation PUBLIC
+    ../import/uartmaster/sim
+    ../import/spi/sim
+)
 target_compile_definitions(simulation PUBLIC EDGE_DETECTION)
 
 if(TRACE)
@@ -58,10 +67,11 @@ verilate(simulation TRACE
     THREADS 8
   )
 
-add_custom_command(OUTPUT test.bin
+add_custom_target(test.bin
     COMMAND z80asm --list=test.lst --label=test.sym -I${PROJECT_SOURCE_DIR} -o test.bin ${PROJECT_SOURCE_DIR}/test.asm
 	COMMAND hexdump -ve '1/1 \"%02x \"' test.bin > test.mem
-    DEPENDS test.asm
+    DEPENDS test.asm uart.asm spi.asm defs.asm sdcard.asm
+    BYPRODUCTS test.sym test.lst test.mem
     COMMENT "Assembling test program"
 )
 

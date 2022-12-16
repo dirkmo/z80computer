@@ -15,3 +15,17 @@ spi_wait:
     jr z, spi_wait
     pop af
     ret
+
+spi_cs_assert:
+    push af
+    ld a, BIT_SPI_ST_SEL
+    out (PORT_SPI_ST), a
+    pop af
+    ret
+
+spi_cs_deassert:
+    push af
+    ld a, 0
+    out (PORT_SPI_ST), a
+    pop af
+    ret

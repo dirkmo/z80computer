@@ -69,15 +69,16 @@ def send_cmd(idx, data, echo=False):
     spi.transfer(bytes(data))
     rsp = spi.transfer(bytes([0xff] * 8))
     spi.cs = False
-    for i,d in enumerate(rsp):
-        if d != 0xff:
-            rsp = rsp[i:]
-            break
     if echo:
         sys.stdout.write("- R: ")
         for d in rsp:
             sys.stdout.write(f'{d:02x} ')
         print()
+
+    for i,d in enumerate(rsp):
+        if d != 0xff:
+            rsp = rsp[i:]
+            break
     return rsp
 
 
@@ -182,7 +183,7 @@ def cmd24(addr, blockdata, echo=True):
 
 
 def cmd55():
-    rsp = send_cmd(55, [0,0,0,0])
+    rsp = send_cmd(55, [0,0,0,0], echo=True)
     return rsp[0] in [0,1]
 
 
