@@ -12,6 +12,7 @@ end:
     out (PORT_LEDS),a
     jp end
 
+include "debug.asm"
 include "uart.asm"
 include "spi.asm"
 include "sdcard.asm"

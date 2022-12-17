@@ -18,4 +18,8 @@ PORT_SPI_TX:            equ 3
 BIT_SPI_ST_SEL:         equ 0x01
 BIT_SPI_ST_BUSY:        equ 0x80
 
+; LED port
 PORT_LEDS:              equ 0x10
+
+; debug uart
+PORT_DEBUG:             equ 0x11

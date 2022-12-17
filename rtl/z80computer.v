@@ -42,7 +42,7 @@ wire cpu_memcs = (~cpu_wr_n || ~cpu_rd_n) && ~cpu_mreq_n;
 wire cpu_iocs /* verilator public */ = (~cpu_wr_n || ~cpu_rd_n) && (~cpu_iorq_n && cpu_m1_n);
 wire [15:0] o_cpu_addr;
 wire [7:0] o_cpu_dat;
-wire [7:0] i_cpu_dat;
+reg  [7:0] i_cpu_dat;
 wire cpu_int;
 wire cpu_int_ack = cpu_iorq_n && cpu_m1_n;
 wire cpu_opcode_fetch_n /* verilator public */ = cpu_mreq_n || cpu_m1_n;
@@ -115,7 +115,7 @@ UartMasterSlave #(.BAUDRATE(BAUDRATE),.SYS_FREQ(SYS_FREQ)) uart(
 );
 
 reg spi_cs;
-wire [7:0] spi_dat;
+wire [7:0] o_spi_dat;
 wire spi_irq;
 
 spi spi0(
@@ -126,7 +126,7 @@ spi spi0(
     .i_cs(spi_cs),
     .i_we(cpu_we),
     .i_dat(o_dat),
-    .o_dat(spi_dat),
+    .o_dat(o_spi_dat),
 
     .i_miso(i_miso),
     .o_mosi(o_mosi),
@@ -171,7 +171,15 @@ assign           o_cs =   //r_vgamaster_active ? vgamaster_cs :
                           r_cpumaster_active ? cpu_memcs : 0;
 
 wire cpu_ioack = uartslave_cs && o_uartslave_ack;
-assign i_cpu_dat = uartslave_cs ? o_uartslave_dat : i_dat;
+
+always @(*) begin
+    if (uartslave_cs)
+        i_cpu_dat = o_uartslave_dat;
+    else if (spi_cs)
+        i_cpu_dat = o_spi_dat;
+    else
+        i_cpu_dat = i_dat;
+end
 
 assign cpu_ack      = r_cpumaster_active && ((cpu_memcs == i_ack) || (cpu_iocs == cpu_ioack));
 assign uartmaster_ack = r_uartmaster_active && uartmaster_cs && i_ack;
@@ -217,6 +225,14 @@ always @(posedge i_clk) begin
 end
 
 `ifdef SIM
+
+wire debug_cs = cpu_iocs && (o_cpu_addr[7:0] == 8'h11);
+always @(posedge i_clk) begin
+    if (debug_cs && cpu_we) begin
+        $write("%c", o_cpu_dat[7:0]);
+    end
+end
+
 always @(posedge i_clk)
    if (o_cpu_addr[7:0] == 8'hff && ~cpu_iorq_n)
        $finish;

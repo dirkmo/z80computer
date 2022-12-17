@@ -65,7 +65,7 @@ static int cmd0_handle(uint8_t *cmd, uint8_t *idx) {
     if (appcmd) {
         return illegal_cmd();
     }
-    if (*idx == 8) {
+    if (*idx == 7) {
         if (strncmp((const char*)cmd0, (const char*)cmd, sizeof(cmd0)) == 0) {
             state = IDLE;
             printf("CMD0: IDLE\n");
@@ -77,18 +77,21 @@ static int cmd0_handle(uint8_t *cmd, uint8_t *idx) {
 }
 
 static int cmd8_handle(uint8_t *cmd, uint8_t *idx) {
-    if (*idx == 8) {
+    if (*idx == 7) {
         if (strncmp((const char*)cmd8, (const char*)cmd, sizeof(cmd8)) == 0) {
             printf("CMD8\n");
-            *idx = 0;
             return return_r1();
         }
+    } else if (*idx > 7 && *idx < 12) {
+        return 0; // voltage data
+    } else if (*idx >= 12) {
+        *idx = 0;
     }
     return 0xff;
 }
 
 static int cmd55_handle(uint8_t *cmd, uint8_t *idx) {
-    if (*idx == 8) {
+    if (*idx == 7) {
         if (strncmp((const char*)cmd55, (const char*)cmd, 5) == 0) {
             printf("CMD55\n");
             *idx = 0;
@@ -100,8 +103,8 @@ static int cmd55_handle(uint8_t *cmd, uint8_t *idx) {
 }
 
 static int cmd41_handle(uint8_t *cmd, uint8_t *idx) {
-    static int retry = 3;
-    if (*idx == 8) {
+    static int retry = 2;
+    if (*idx == 7) {
         printf("CMD41\n");
         if (!appcmd) {
             R1 r1 {0}; r1.bits.illegal_command = 1;
@@ -116,7 +119,9 @@ static int cmd41_handle(uint8_t *cmd, uint8_t *idx) {
             } else {
                 retry--;
             }
-            return return_r1();
+            int ret = return_r1();
+            printf("%x\n",ret);
+            return ret;
         }
     }
     return 0xff;

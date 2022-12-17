@@ -45,7 +45,19 @@ cmd_r1: ; hl: cmd data
 
 .cmd8: ; send cmd8, voltage setup
     ld hl, .cmd8_data
+    ; cmd8 returns R7, which is R1 + 4 bytes of data
     call cmd_r1
+    push af
+    ; read 4 bytes
+    ld a,0xff
+    call spi_transceive
+    ld a,0xff
+    call spi_transceive
+    ld a,0xff
+    call spi_transceive
+    ld a,0xff
+    call spi_transceive
+    pop af
     ret
 
 .acmd41: ; send cmd8, voltage setup
@@ -64,7 +76,7 @@ sdcard_init:
     call .cmd0
     call .cmd8
     call .acmd41
-    jr nz, .sdcard_init_ret
+    ;jr nz, .sdcard_init_ret
 
 .sdcard_init_ret:
     pop hl

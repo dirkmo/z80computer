@@ -7,6 +7,7 @@ spi_transceive: ; a: data to send
     call spi_transmit
     call spi_wait
     in a,(PORT_SPI_RX)
+    ret
 
 spi_wait:
     push af
