@@ -1,6 +1,21 @@
 ; sdcard functions
 
-; send cmd and return R1 in a
+.gen_clks:
+    ; after power-up the sd-card needs some clock cycles to initialize
+    ; no slave-select needed
+    push af
+    push bc
+    ld a,0
+    ld b,10
+.gen_clks_loop:
+    call spi_wait
+    call spi_transmit
+    djnz .gen_clks_loop
+    pop bc
+    pop af
+    ret
+
+; send cmd at (hl) and return R1 in a
 cmd_r1: ; hl: cmd data
     push bc
     ld b, 6
@@ -11,15 +26,48 @@ cmd_r1: ; hl: cmd data
     call spi_wait
     call spi_transmit
     djnz .cmd_r1_loop
+    ; dummy byte
+    call spi_wait
+    ld a,0xff
+    call spi_transmit
+    ; fetch response r1
+    call spi_transceive
     call spi_cs_deassert
     pop bc
     ret
 
+.cmd0: ; send cmd0, card is idle afterwards
+    ; returns: a=0 on success
+    ld hl, .cmd0_data
+    call cmd_r1
+    dec a ; idle bit (#0) should be set
+    ret
+
+.cmd8: ; send cmd8, voltage setup
+    ld hl, .cmd8_data
+    call cmd_r1
+    ret
+
+.acmd41: ; send cmd8, voltage setup
+    ld hl, .cmd55_data
+    call cmd_r1
+    ld hl, .cmd41_data
+    call cmd_r1
+    cp 1
+    jr z, .acmd41
+    ret
 
 
 sdcard_init:
-    ld hl, .cmd0_data
-    call cmd_r1
+    push hl
+    call .gen_clks
+    call .cmd0
+    call .cmd8
+    call .acmd41
+    jr nz, .sdcard_init_ret
+
+.sdcard_init_ret:
+    pop hl
     ret
 
 
