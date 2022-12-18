@@ -28,6 +28,8 @@ static uint8_t recbuf[6];
 static uint8_t recbuf_idx = 0;
 static int appcmd = 0;
 
+static uint8_t memory[0x100000];
+
 /*
 CMD0 40 00 00 00 00 95 - R: ff 01 ff ff ff ff ff ff
 CMD8 48 00 00 01 00 d5 - R: ff 01 00 00 01 00 ff ff
@@ -127,7 +129,53 @@ static int cmd41_handle(uint8_t *cmd, uint8_t *idx) {
 }
 
 static int cmd58_handle(uint8_t *cmd, uint8_t *idx) {
-    printf("CMD58\n");
+    switch(*idx) {
+        case 7: printf("CMD58\n");
+            return return_r1();
+        case 8: return (state==IDLE) ? 0 : 0xc0;
+        case 9: return 0xff;
+        case 10: return 0x80;
+        case 11: return 0x00;
+        case 12: *idx = 0; return 0xff;
+        default: ;
+    }
+    return 0xff;
+}
+
+static int cmd17_handle(uint8_t *cmd, uint8_t *idx) {
+    static int count;
+    uint32_t blockno = (cmd[1]<<24) | (cmd[2]<<16) | (cmd[3]<<8) | cmd[4];
+    if (*idx < 7) {
+        return 0xff;
+    } else if (*idx == 7) {
+        printf("CMD17 block %x\n", blockno);
+        R1 r1;
+        r1.val = return_r1();
+        if ((blockno+1)*512 >= sizeof(memory)) {
+            r1.bits.parameter_error = 1;
+            *idx = 0;
+        }
+        return r1.val;
+    } else if (*idx == 8) {
+        count = -2;
+        return 0xff;
+    }
+
+    count++;
+
+    if (count == -1) {
+        printf("block start token\n");
+        return 0xfe; // block start token
+    } else if (count < 512) {
+        printf("%d\n", count);
+        return memory[count+blockno*512];
+    } else if (count == 512) {
+        printf("crc\n");
+        return 0xff; // crc
+    } else if (count == 513) {
+        printf("crc\n");
+        return 0xff; // crc
+    }
     return 0xff;
 }
 
@@ -157,7 +205,10 @@ int sdcard_handle(uint8_t dat) {
             case 41: ret = cmd41_handle(recbuf, &recbuf_idx); break;
             case 55: ret = cmd55_handle(recbuf, &recbuf_idx); break;
             case 58: ret = cmd58_handle(recbuf, &recbuf_idx); break;
-            default: ret = 0xff;
+            case 17: ret = cmd17_handle(recbuf, &recbuf_idx);
+                printf("cmd17 %d: %02x\n", recbuf_idx, ret);
+                break;
+            default: ret = 0xff; break;
         }
     }
 

@@ -4,6 +4,12 @@ include "defs.asm"
 
     call sdcard_init
 
+    ld bc,0x0000
+    ld de,0x0001
+    ld hl,diskbuf
+    call sdcard_read
+
+
 done:
     out (0xff), a
 
@@ -16,3 +22,5 @@ include "debug.asm"
 include "uart.asm"
 include "spi.asm"
 include "sdcard.asm"
+
+diskbuf: ds 512
