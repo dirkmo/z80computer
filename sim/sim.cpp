@@ -88,6 +88,7 @@ void handle(Vz80computer *pCore) {
     if (spibyte >= 0) {
         int sdout = sdcard_handle(spibyte);
         if (sdout >= 0) {
+            // printf("sdcard send: %02x\n", sdout);
             spislave_set_miso((uint8_t)sdout);
         }
     }

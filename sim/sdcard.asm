@@ -16,10 +16,10 @@
     ret
 
 ; send cmd at (hl) and return R1 in a
-cmd_r1: ; hl: cmd data
+.cmd_r1: ; hl: cmd data
     push bc
     ld b, 6
-    call spi_cs_assert
+    ; call spi_cs_assert
 .cmd_r1_loop:
     ld a, (hl)
     inc hl
@@ -32,21 +32,24 @@ cmd_r1: ; hl: cmd data
     call spi_transmit
     ; fetch response r1
     call spi_transceive
-    call spi_cs_deassert
+    ;call spi_cs_deassert
     pop bc
     ret
 
 .cmd0: ; send cmd0, card is idle afterwards
     ; returns: a=0 on success
     ld hl, .cmd0_data
-    call cmd_r1
+    call spi_cs_assert
+    call .cmd_r1
+    call spi_cs_deassert
     dec a ; idle bit (#0) should be set
     ret
 
 .cmd8: ; send cmd8, voltage setup
     ld hl, .cmd8_data
     ; cmd8 returns R7, which is R1 + 4 bytes of data
-    call cmd_r1
+    call spi_cs_assert
+    call .cmd_r1
     push af
     ; read 4 bytes
     ld a,0xff
@@ -57,17 +60,21 @@ cmd_r1: ; hl: cmd data
     call spi_transceive
     ld a,0xff
     call spi_transceive
+    call spi_cs_deassert
     pop af
     ret
 
 .acmd41: ; send cmd8, voltage setup
     ld hl, .cmd55_data
-    call cmd_r1
+    call spi_cs_assert
+    call .cmd_r1
     ld hl, .cmd41_data
-    call cmd_r1
+    call .cmd_r1
+    call spi_cs_deassert
     cp 1
     jr z, .acmd41
     ret
+
 
 
 sdcard_init:

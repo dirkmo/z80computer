@@ -120,7 +120,6 @@ static int cmd41_handle(uint8_t *cmd, uint8_t *idx) {
                 retry--;
             }
             int ret = return_r1();
-            printf("%x\n",ret);
             return ret;
         }
     }
@@ -139,6 +138,7 @@ void sdcard_init(const char *diskfn) {
 
 int sdcard_handle(uint8_t dat) {
     int ret = 0xff;
+    // printf("sdcard rec %d: %02x\n", recbuf_idx, dat);
     if ((recbuf_idx == 0) && (dat == 0xff)) {
         return 0xff;
     }
@@ -146,7 +146,6 @@ int sdcard_handle(uint8_t dat) {
         recbuf[recbuf_idx] = dat;
     }
     recbuf_idx++;
-    printf("%d: %02x\n", recbuf_idx, dat);
     if (recbuf_idx < 7) {
         return 0xff;
     }
