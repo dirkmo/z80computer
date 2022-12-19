@@ -76,7 +76,7 @@
     ret
 
 sdcard_read: ; read block
-    ; destroys a
+    ; destroys a, hl
     ; sector in bc,de
     ; written to (hl)
     ld a,17|0x40
@@ -89,9 +89,11 @@ sdcard_read: ; read block
     ld (.cmd_scratch+3), a
     ld a,e
     ld (.cmd_scratch+4), a
+    push hl
     ld hl, .cmd_scratch
     call spi_cs_assert
     call .cmd_r1
+    pop hl
     and 0xfe
     cp 0
     jr nz,.sdcard_read_ret ; jump-on-error
@@ -102,7 +104,7 @@ sdcard_read: ; read block
     cp 0xfe
     jr nz, .sdcard_read_fe
     ; receive 512 bytes
-    ld bc,512
+    ld bc,5
 .sdcard_read_loop:
     ld a,0xff
     call spi_transceive
@@ -112,7 +114,6 @@ sdcard_read: ; read block
     ld a,b
     or c
     jr nz,.sdcard_read_loop
-    call crlf
     ; fetch crc
     call spi_transceive
     call spi_transceive
@@ -148,11 +149,8 @@ sdcard_init:
     call .cmd0
     call .cmd8
     call .cmd58
-    ; call .acmd41
-    ; call .cmd58
-    ;jr nz, .sdcard_init_ret
-
-.sdcard_init_ret:
+    call .acmd41
+    call .cmd58
     pop hl
     ret
 
@@ -161,8 +159,6 @@ sdcard_init:
 
 .cmd0_data:  db 0x40, 0x00, 0x00, 0x00, 0x00, 0x95
 .cmd8_data:  db 0x48, 0x00, 0x00, 0x01, 0x00, 0xd5
-.cmd17_data: db 0x51 ; omit address bytes and crc
-.cmd24_data: db 0x58 ; omit address bytes and crc
 .cmd41_data: db 0x69, 0x40, 0x00, 0x00, 0x00, 0x77
 .cmd55_data: db 0x77, 0x00, 0x00, 0x00, 0x00, 0x65
 .cmd58_data: db 0x7a, 0x00, 0x00, 0x00, 0x00, 0xfd

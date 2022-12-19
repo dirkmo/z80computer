@@ -20,20 +20,21 @@ debug_puts: ; hl: string to send, null-terminated
 
 ;#############################################################################
 ; Print the value in A in hex
-; Clobbers C
 ;#############################################################################
 hexdump_a:
-	push	af
+    push bc
+	push af
 	srl	a
 	srl	a
 	srl	a
 	srl	a
 	call	.hexdump_nib
 	pop	af
-	push	af
+	push af
 	and	0x0f
 	call	.hexdump_nib
 	pop	af
+    pop bc
 	ret
 
 .hexdump_nib:
@@ -46,7 +47,12 @@ hexdump_a:
 	jp	debug_putc	   ; tail
 
 crlf:
+    push af
+    push bc
     ld c,13
     call debug_putc
     ld c,10
-    jp debug_putc
+    call debug_putc
+    pop bc
+    pop af
+    ret

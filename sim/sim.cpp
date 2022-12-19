@@ -135,14 +135,9 @@ int main(int argc, char *argv[]) {
 #endif
 
     uart_init(&pCore->i_uart_rx, &pCore->o_uart_tx, &pCore->z80computer->i_clk, pCore->z80computer->SYS_FREQ/pCore->z80computer->BAUDRATE);
-    // if (disk_init("disk.img", 4) < 0) {
-    //     fprintf(stderr, "ERROR: Failed to load disk image '%s'\n", "disk.img");
-    //     // return -3;
-    // }
-
     console_init();
-
     spislave_init(&pCore->o_sck, &pCore->i_miso, &pCore->o_mosi, &pCore->o_ss);
+    sdcard_init(argv[2]);
 
     reset();
 

@@ -144,6 +144,7 @@ static int cmd58_handle(uint8_t *cmd, int *idx) {
 
 static int cmd17_handle(uint8_t *cmd, int *idx) {
     uint32_t blockno = (cmd[1]<<24) | (cmd[2]<<16) | (cmd[3]<<8) | cmd[4];
+    constexpr int blocklen = 512;
     switch(*idx) {
         case 7: {
             printf("CMD17 block %x\n", blockno);
@@ -156,14 +157,12 @@ static int cmd17_handle(uint8_t *cmd, int *idx) {
             return r1.val;
         }
         case 8: return 0xff;
-        case 9: printf("block start token\n");
-                return 0xfe; // block start token
-        case 10 ... 521:
-                printf("%d\n", *idx-10);
+        case 9: return 0xfe; // block start token
+        case 10 ... blocklen+9:
                 return memory[*idx+blockno*512-10];
-        case 522: printf("crc\n"); return 0xff; // crc
-        case 523: printf("crc\n"); return 0xff; // crc
-        default: printf("default\n"); return 0xff;
+        case blocklen+10: return 0xff; // crc
+        case blocklen+11: return 0xff; // crc
+        default: return 0xff;
     }
     return 0xff;
 }
@@ -171,6 +170,20 @@ static int cmd17_handle(uint8_t *cmd, int *idx) {
 void sdcard_init(const char *diskfn) {
     state = POWERUP;
     recbuf_idx = 0;
+
+    FILE *f = fopen(diskfn, "rb");
+    if (!f) {
+        fprintf(stderr, "%s: Failed to open file '%s'\n", __func__, diskfn);
+        return;
+    }
+    fseek(f, 0, SEEK_END);
+    size_t size = ftell(f);
+    if (size > sizeof(memory)) {
+        size = sizeof(memory);
+    }
+    fseek(f, 0, SEEK_SET);
+    fread(memory, size, 1, f);
+    fclose(f);
 }
 
 int sdcard_handle(uint8_t dat) {
