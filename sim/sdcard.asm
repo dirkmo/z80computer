@@ -8,8 +8,7 @@
     ld a,0
     ld b,10
 .gen_clks_loop:
-    call spi_wait
-    call spi_transmit
+    call spi_wait_transmit
     djnz .gen_clks_loop
     pop bc
     pop af
@@ -23,13 +22,12 @@
 .cmd_r1_loop:
     ld a, (hl)
     inc hl
-    call spi_wait
-    call spi_transmit
+    call spi_wait_transmit
     djnz .cmd_r1_loop
     ; dummy byte
     call spi_wait
     ld a,0xff
-    call spi_transmit
+    call spi_wait_transmit
     ; fetch response r1
     call spi_transceive
     ;call spi_cs_deassert
@@ -104,7 +102,7 @@ sdcard_read: ; read block
     cp 0xfe
     jr nz, .sdcard_read_fe
     ; receive 512 bytes
-    ld bc,5
+    ld bc,512
 .sdcard_read_loop:
     ld a,0xff
     call spi_transceive
@@ -121,7 +119,61 @@ sdcard_read: ; read block
     call spi_cs_deassert
     ret
 
-.cmd24:
+sdcard_write: ; write block
+    ; destroys a, hl
+    ; sector in bc,de
+    ; data from (hl) written to sdcard
+    ld a,24|0x40
+    ld (.cmd_scratch),a
+    ld a,b
+    ld (.cmd_scratch+1), a
+    ld a,c
+    ld (.cmd_scratch+2), a
+    ld a,d
+    ld (.cmd_scratch+3), a
+    ld a,e
+    ld (.cmd_scratch+4), a
+    push hl
+    ld hl, .cmd_scratch
+    call spi_cs_assert
+    call .cmd_r1
+    pop hl
+    and 0xfe
+    cp 0
+    jr nz,.sdcard_write_ret ; jump-on-error
+    ; send dummy byte
+    ld a, 0xff
+    call spi_wait_transmit
+    ; send block start token
+    ld a, 0xfe
+    call spi_wait_transmit
+    ; send block data
+    ld bc,5;512
+.sdcard_write_loop:
+    ld a,(hl)
+    inc hl
+    call spi_wait_transmit
+    dec bc
+    ld a,b
+    or c
+    jr nz,.sdcard_write_loop
+    ; send crc
+    ld a,0xff
+    call spi_wait_transmit
+    call spi_wait_transmit
+    ; receive data response token xxx00101
+    call spi_transceive
+    and 0x1f
+    cp 5
+    jr nz, .sdcard_write_ret
+.sdcard_write_busy:
+    ; wait while sdcard is busy
+    ld a,0xff
+    call spi_transceive
+    cp 0
+    jr z, .sdcard_write_busy
+.sdcard_write_ret:
+    call spi_cs_deassert
     ret
 
 .cmd58: ; read OCR

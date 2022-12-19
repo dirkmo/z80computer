@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
     while(!Verilated::gotFinish()) {
         handle(pCore);
 #ifdef TRACE
-        if(tickcount > 210000*clockcycle_ps) {
+        if(tickcount > 50000*clockcycle_ps) {
             printf("timeout\n");
             break;
         }

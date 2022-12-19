@@ -162,7 +162,60 @@ static int cmd17_handle(uint8_t *cmd, int *idx) {
                 return memory[*idx+blockno*512-10];
         case blocklen+10: return 0xff; // crc
         case blocklen+11: return 0xff; // crc
+        case blocklen+12: *idx = 0; return 0xff;
         default: return 0xff;
+    }
+    return 0xff;
+}
+
+static int cmd24_handle(uint8_t *cmd, int *idx, uint8_t dat) {
+    uint32_t blockno = (cmd[1]<<24) | (cmd[2]<<16) | (cmd[3]<<8) | cmd[4];
+    constexpr int blocklen = 5;
+    static int startidx;
+    if (*idx == 7) {
+        printf("CMD24 block %x\n", blockno);
+        R1 r1;
+        r1.val = return_r1();
+        if ((blockno+1)*512 >= sizeof(memory)) {
+            r1.bits.parameter_error = 1;
+            *idx = 0;
+        }
+        startidx = -1;
+        return r1.val;
+    } else if (*idx == 8) {
+        return 0xff;
+    }
+
+    if (startidx == -1) {
+        if (dat == 0xfe) {
+            // start block token 0xfe
+            startidx = *idx+1;
+            return 0xff;
+        }
+    } else {
+        int bbidx = *idx - startidx;
+        printf(" %d: ", bbidx);
+        if (bbidx < blocklen) {
+            printf("%02x ",dat);
+            memory[blockno*512+bbidx] = dat;
+            return 0xff;
+        } else if (bbidx == blocklen) {
+            // crc1 received
+            return 0xff;
+        } else if (bbidx == blocklen+1) {
+            // crc2 received. Send data response token
+            return 0xe5;
+        } else if (bbidx < blocklen+4) {
+            printf("busy ");
+            // busy
+            return 0;
+        } else {
+            printf("not busy\n");
+            *idx = 0;
+            startidx = -1;
+            // card not busy
+            return 0xff;
+        }
     }
     return 0xff;
 }
@@ -207,8 +260,8 @@ int sdcard_handle(uint8_t dat) {
             case 41: ret = cmd41_handle(recbuf, &recbuf_idx); break;
             case 55: ret = cmd55_handle(recbuf, &recbuf_idx); break;
             case 58: ret = cmd58_handle(recbuf, &recbuf_idx); break;
-            case 17: ret = cmd17_handle(recbuf, &recbuf_idx);
-                break;
+            case 17: ret = cmd17_handle(recbuf, &recbuf_idx); break;
+            case 24: ret = cmd24_handle(recbuf, &recbuf_idx, dat); break;
             default: ret = 0xff; break;
         }
     }

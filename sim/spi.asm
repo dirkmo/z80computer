@@ -3,8 +3,13 @@ spi_transmit: ; a: data to send
     out (PORT_SPI_TX),a
     ret
 
+spi_wait_transmit: ; a: data to send
+    call spi_wait
+    out (PORT_SPI_TX),a
+    ret
+
 spi_transceive: ; a: data to send
-    call spi_transmit
+    call spi_wait_transmit
     call spi_wait
     in a,(PORT_SPI_RX)
     ret

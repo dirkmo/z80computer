@@ -7,8 +7,7 @@ include "defs.asm"
     ld bc,0x0000
     ld de,0x0001
     ld hl,diskbuf
-    call sdcard_read
-
+    call sdcard_write
 
 done:
     out (0xff), a
@@ -23,4 +22,6 @@ include "uart.asm"
 include "spi.asm"
 include "sdcard.asm"
 
-diskbuf: ds 512
+diskbuf:    db 0xaa
+            ds 3
+            db 0xbb
