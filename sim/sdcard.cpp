@@ -25,7 +25,7 @@ union R1 {
 static cardstate_t state;
 
 static uint8_t recbuf[6];
-static uint8_t recbuf_idx = 0;
+static int recbuf_idx = 0;
 static int appcmd = 0;
 
 static uint8_t memory[0x100000];
@@ -63,7 +63,7 @@ static int illegal_cmd() {
     return r1.val;
 }
 
-static int cmd0_handle(uint8_t *cmd, uint8_t *idx) {
+static int cmd0_handle(uint8_t *cmd, int *idx) {
     if (appcmd) {
         return illegal_cmd();
     }
@@ -78,7 +78,7 @@ static int cmd0_handle(uint8_t *cmd, uint8_t *idx) {
     return 0xff;
 }
 
-static int cmd8_handle(uint8_t *cmd, uint8_t *idx) {
+static int cmd8_handle(uint8_t *cmd, int *idx) {
     if (*idx == 7) {
         if (strncmp((const char*)cmd8, (const char*)cmd, sizeof(cmd8)) == 0) {
             printf("CMD8\n");
@@ -92,7 +92,7 @@ static int cmd8_handle(uint8_t *cmd, uint8_t *idx) {
     return 0xff;
 }
 
-static int cmd55_handle(uint8_t *cmd, uint8_t *idx) {
+static int cmd55_handle(uint8_t *cmd, int *idx) {
     if (*idx == 7) {
         if (strncmp((const char*)cmd55, (const char*)cmd, 5) == 0) {
             printf("CMD55\n");
@@ -104,7 +104,7 @@ static int cmd55_handle(uint8_t *cmd, uint8_t *idx) {
     return 0xff;
 }
 
-static int cmd41_handle(uint8_t *cmd, uint8_t *idx) {
+static int cmd41_handle(uint8_t *cmd, int *idx) {
     static int retry = 2;
     if (*idx == 7) {
         printf("CMD41\n");
@@ -128,7 +128,7 @@ static int cmd41_handle(uint8_t *cmd, uint8_t *idx) {
     return 0xff;
 }
 
-static int cmd58_handle(uint8_t *cmd, uint8_t *idx) {
+static int cmd58_handle(uint8_t *cmd, int *idx) {
     switch(*idx) {
         case 7: printf("CMD58\n");
             return return_r1();
@@ -142,39 +142,28 @@ static int cmd58_handle(uint8_t *cmd, uint8_t *idx) {
     return 0xff;
 }
 
-static int cmd17_handle(uint8_t *cmd, uint8_t *idx) {
-    static int count;
+static int cmd17_handle(uint8_t *cmd, int *idx) {
     uint32_t blockno = (cmd[1]<<24) | (cmd[2]<<16) | (cmd[3]<<8) | cmd[4];
-    if (*idx < 7) {
-        return 0xff;
-    } else if (*idx == 7) {
-        printf("CMD17 block %x\n", blockno);
-        R1 r1;
-        r1.val = return_r1();
-        if ((blockno+1)*512 >= sizeof(memory)) {
-            r1.bits.parameter_error = 1;
-            *idx = 0;
+    switch(*idx) {
+        case 7: {
+            printf("CMD17 block %x\n", blockno);
+            R1 r1;
+            r1.val = return_r1();
+            if ((blockno+1)*512 >= sizeof(memory)) {
+                r1.bits.parameter_error = 1;
+                *idx = 0;
+            }
+            return r1.val;
         }
-        return r1.val;
-    } else if (*idx == 8) {
-        count = -2;
-        return 0xff;
-    }
-
-    count++;
-
-    if (count == -1) {
-        printf("block start token\n");
-        return 0xfe; // block start token
-    } else if (count < 512) {
-        printf("%d\n", count);
-        return memory[count+blockno*512];
-    } else if (count == 512) {
-        printf("crc\n");
-        return 0xff; // crc
-    } else if (count == 513) {
-        printf("crc\n");
-        return 0xff; // crc
+        case 8: return 0xff;
+        case 9: printf("block start token\n");
+                return 0xfe; // block start token
+        case 10 ... 521:
+                printf("%d\n", *idx-10);
+                return memory[*idx+blockno*512-10];
+        case 522: printf("crc\n"); return 0xff; // crc
+        case 523: printf("crc\n"); return 0xff; // crc
+        default: printf("default\n"); return 0xff;
     }
     return 0xff;
 }
@@ -206,7 +195,6 @@ int sdcard_handle(uint8_t dat) {
             case 55: ret = cmd55_handle(recbuf, &recbuf_idx); break;
             case 58: ret = cmd58_handle(recbuf, &recbuf_idx); break;
             case 17: ret = cmd17_handle(recbuf, &recbuf_idx);
-                printf("cmd17 %d: %02x\n", recbuf_idx, ret);
                 break;
             default: ret = 0xff; break;
         }

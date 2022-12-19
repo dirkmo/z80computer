@@ -112,6 +112,7 @@ sdcard_read: ; read block
     ld a,b
     or c
     jr nz,.sdcard_read_loop
+    call crlf
     ; fetch crc
     call spi_transceive
     call spi_transceive
