@@ -21,7 +21,7 @@ debug_puts: ; hl: string to send, null-terminated
 ;#############################################################################
 ; Print the value in A in hex
 ;#############################################################################
-hexdump_a:
+debug_hexdump_a:
     push bc
 	push af
 	srl	a
@@ -46,7 +46,7 @@ hexdump_a:
 	ld	c,a
 	jp	debug_putc	   ; tail
 
-crlf:
+debug_crlf:
     push af
     push bc
     ld c,13

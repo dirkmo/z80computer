@@ -6,7 +6,6 @@ SOURCES =$(wildcard ../rtl/*.v)
 SOURCES+=$(wildcard ../import/uartmaster/rtl/*.v)
 SOURCES+=$(wildcard ../import/tv80/rtl/core/*.v)
 SOURCES+=../import/spi/rtl/spi.v
-#SOURCES+=pll.v
 SOURCES+=top.v
 
 PROG=../sw/test/rom.inc
@@ -41,7 +40,8 @@ prog: $(PROJ).bin
 	iceprogduino $<
 
 clean:
-	rm -f $(PROJ).asc $(PROJ).bin $(PROJ).rpt $(PROJ).json rom.inc rom.mem rom.bin pll.v
+	rm -f $(PROJ).asc $(PROJ).bin $(PROJ).rpt $(PROJ).json pll.v
+	make -C ../sw/test clean
 
 .SECONDARY: %.asc %.json
 .PHONY: all prog clean

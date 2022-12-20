@@ -2,6 +2,10 @@
 #include <cstdio>
 #include <cstring>
 
+//#define LOG printf
+#define LOG(...)
+
+
 enum cardstate_t {
     POWERUP,
     IDLE,
@@ -70,7 +74,7 @@ static int cmd0_handle(uint8_t *cmd, int *idx) {
     if (*idx == 7) {
         if (strncmp((const char*)cmd0, (const char*)cmd, sizeof(cmd0)) == 0) {
             state = IDLE;
-            printf("CMD0: IDLE\n");
+            LOG("CMD0: IDLE\n");
             *idx = 0;
             return return_r1();
         }
@@ -81,7 +85,7 @@ static int cmd0_handle(uint8_t *cmd, int *idx) {
 static int cmd8_handle(uint8_t *cmd, int *idx) {
     if (*idx == 7) {
         if (strncmp((const char*)cmd8, (const char*)cmd, sizeof(cmd8)) == 0) {
-            printf("CMD8\n");
+            LOG("CMD8\n");
             return return_r1();
         }
     } else if (*idx > 7 && *idx < 12) {
@@ -95,7 +99,7 @@ static int cmd8_handle(uint8_t *cmd, int *idx) {
 static int cmd55_handle(uint8_t *cmd, int *idx) {
     if (*idx == 7) {
         if (strncmp((const char*)cmd55, (const char*)cmd, 5) == 0) {
-            printf("CMD55\n");
+            LOG("CMD55\n");
             *idx = 0;
             appcmd = 1;
             return return_r1();
@@ -107,7 +111,7 @@ static int cmd55_handle(uint8_t *cmd, int *idx) {
 static int cmd41_handle(uint8_t *cmd, int *idx) {
     static int retry = 2;
     if (*idx == 7) {
-        printf("CMD41\n");
+        LOG("CMD41\n");
         if (!appcmd) {
             R1 r1 {0}; r1.bits.illegal_command = 1;
             return r1.val;
@@ -117,7 +121,7 @@ static int cmd41_handle(uint8_t *cmd, int *idx) {
             *idx = 0;
             if (retry == 0) {
                 state = READY;
-                printf("READY\n");
+                LOG("READY\n");
             } else {
                 retry--;
             }
@@ -130,7 +134,7 @@ static int cmd41_handle(uint8_t *cmd, int *idx) {
 
 static int cmd58_handle(uint8_t *cmd, int *idx) {
     switch(*idx) {
-        case 7: printf("CMD58\n");
+        case 7: LOG("CMD58\n");
             return return_r1();
         case 8: return (state==IDLE) ? 0 : 0xc0;
         case 9: return 0xff;
@@ -147,7 +151,7 @@ static int cmd17_handle(uint8_t *cmd, int *idx) {
     constexpr int blocklen = 512;
     switch(*idx) {
         case 7: {
-            printf("CMD17 block %x\n", blockno);
+            LOG("CMD17 block %x\n", blockno);
             R1 r1;
             r1.val = return_r1();
             if ((blockno+1)*512 >= sizeof(memory)) {
@@ -173,7 +177,7 @@ static int cmd24_handle(uint8_t *cmd, int *idx, uint8_t dat) {
     constexpr int blocklen = 5;
     static int startidx;
     if (*idx == 7) {
-        printf("CMD24 block %x\n", blockno);
+        LOG("CMD24 block %x\n", blockno);
         R1 r1;
         r1.val = return_r1();
         if ((blockno+1)*512 >= sizeof(memory)) {
@@ -194,9 +198,9 @@ static int cmd24_handle(uint8_t *cmd, int *idx, uint8_t dat) {
         }
     } else {
         int bbidx = *idx - startidx;
-        printf(" %d: ", bbidx);
+        LOG(" %d: ", bbidx);
         if (bbidx < blocklen) {
-            printf("%02x ",dat);
+            LOG("%02x ",dat);
             memory[blockno*512+bbidx] = dat;
             return 0xff;
         } else if (bbidx == blocklen) {
@@ -206,11 +210,11 @@ static int cmd24_handle(uint8_t *cmd, int *idx, uint8_t dat) {
             // crc2 received. Send data response token
             return 0xe5;
         } else if (bbidx < blocklen+4) {
-            printf("busy ");
+            LOG("busy ");
             // busy
             return 0;
         } else {
-            printf("not busy\n");
+            LOG("not busy\n");
             *idx = 0;
             startidx = -1;
             // card not busy
@@ -241,7 +245,7 @@ void sdcard_init(const char *diskfn) {
 
 int sdcard_handle(uint8_t dat) {
     int ret = 0xff;
-    // printf("sdcard rec %d: %02x\n", recbuf_idx, dat);
+    // LOG("sdcard rec %d: %02x\n", recbuf_idx, dat);
     if ((recbuf_idx == 0) && (dat == 0xff)) {
         return 0xff;
     }

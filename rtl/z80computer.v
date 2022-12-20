@@ -181,7 +181,7 @@ always @(*) begin
         i_cpu_dat = i_dat;
 end
 
-assign cpu_ack      = r_cpumaster_active && ((cpu_memcs == i_ack) || (cpu_iocs == cpu_ioack));
+wire cpu_ack          = r_cpumaster_active && ((cpu_memcs == i_ack) || (cpu_iocs == cpu_ioack));
 assign uartmaster_ack = r_uartmaster_active && uartmaster_cs && i_ack;
 
 always @(posedge i_clk)
@@ -198,17 +198,18 @@ begin
         r_cpumaster_active  <= 1; // cpu has lowest priority
 end
 
-reg [7:0] waitcnt = 0;
-wire cpu_ack = &waitcnt;
-always @(posedge i_clk) begin
-    if (o_cs) begin
-        if(~cpu_ack) begin
-            waitcnt <= waitcnt + 1;
-        end
-    end else begin
-        waitcnt <= 0;
-    end
-end
+
+// reg [7:0] waitcnt = 0;
+// wire cpu_ack = &waitcnt;
+// always @(posedge i_clk) begin
+//     if (o_cs) begin
+//         if(~cpu_ack) begin
+//             waitcnt <= waitcnt + 1;
+//         end
+//     end else begin
+//         waitcnt <= 0;
+//     end
+// end
 
 assign cpu_int = i_int || o_uart_int;
 

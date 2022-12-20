@@ -32,3 +32,31 @@ uart_puts: ; hl: string to send, null-terminated
 .uart_puts_done:
     pop bc
     ret
+
+;#############################################################################
+; Print the value in A in hex
+;#############################################################################
+uart_hexdump_a:
+    push bc
+	push af
+	srl	a
+	srl	a
+	srl	a
+	srl	a
+	call	.hexdump_nib
+	pop	af
+	push af
+	and	0x0f
+	call	.hexdump_nib
+	pop	af
+    pop bc
+	ret
+
+.hexdump_nib:
+	add	'0'
+	cp	'9'+1
+	jp	m,.hexdump_num
+	add	'A'-'9'-1
+.hexdump_num:
+	ld	c,a
+	jp	uart_putc	   ; tail

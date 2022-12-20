@@ -32,10 +32,10 @@ wire cpu_ack;
 
 wire clk25mhz /* verilator public */;
 
-reg [2:0] resetn_counter = 0;
+reg [7:0] resetn_counter = 0;
 wire resetn = &resetn_counter;
 
-always @(posedge clk25mhz) begin
+always @(posedge i_clk100mhz) begin
     if (!resetn)
         resetn_counter <= resetn_counter + 1;
 end
@@ -46,6 +46,7 @@ pll pll0(.clock_in(i_clk100mhz), .clock_out(clk25mhz),	.locked(pll_locked));
 wire reset = ~pll_locked || ~i_reset_n || ~resetn;
 
 wire cpu_ack;
+wire spi_ss;
 
 z80computer #(.BAUDRATE(115200),.SYS_FREQ(25000000)) computer(
     .i_clk(clk25mhz),
@@ -63,7 +64,7 @@ z80computer #(.BAUDRATE(115200),.SYS_FREQ(25000000)) computer(
     .i_miso(i_miso),
     .o_mosi(o_mosi),
     .o_sck(o_sck),
-    .o_ss(o_ss),
+    .o_ss(spi_ss),
     .o_led1(o_led1),
     .o_led2(o_led2)
 );
@@ -74,7 +75,7 @@ assign sram_cs_n = ~cpu_cs;
 assign sram_oe_n = cpu_we;
 assign sram_we_n = ~cpu_we;
 wire cpu_ack = 1'b1;
-
+assign o_ss = ~spi_ss;
 
 `ifdef WAIT
 reg [19:0] waitcnt = 0;
