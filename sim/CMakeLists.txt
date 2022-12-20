@@ -67,17 +67,14 @@ verilate(simulation TRACE
     THREADS 8
   )
 
-add_custom_target(test.bin
-    COMMAND z80asm --list=test.lst --label=test.sym -I${PROJECT_SOURCE_DIR} -o test.bin ${PROJECT_SOURCE_DIR}/test.asm
-	COMMAND hexdump -ve '1/1 \"%02x \"' test.bin > test.mem
-    DEPENDS test.asm uart.asm spi.asm defs.asm sdcard.asm
-    BYPRODUCTS test.sym test.lst test.mem
+add_custom_target(rom.bin
+    COMMAND make -C ${PROJECT_SOURCE_DIR}/../sw/test
     COMMENT "Assembling test program"
 )
 
 add_custom_target(sim
-    COMMAND simulation ${CMAKE_BINARY_DIR}/test.bin
-    DEPENDS test.bin
+    COMMAND simulation ${PROJECT_SOURCE_DIR}/../sw/test/rom.bin
+    DEPENDS rom.bin
     COMMENT "Executing simulation..."
 )
 

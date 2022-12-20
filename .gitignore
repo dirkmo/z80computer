@@ -1,7 +1,5 @@
 sim/verilator/*
 sim/build/*
-sim/test.bin
-sim/test.mem
 sim/trace.vcd
 2063-Z80-cpm/
 build/
@@ -21,8 +19,9 @@ fpga/top.rpt
 fpga/top.json
 sw/stuff/
 fpga/top.asc
-fpga/rom.inc
 fpga/pll.v
-fpga/test.mem
-fpga/rom.bin
-fpga/rom.mem
+sw/test/rom.bin
+sw/test/rom.inc
+sw/test/rom.lst
+sw/test/rom.mem
+sw/test/rom.sym

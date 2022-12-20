@@ -37,16 +37,13 @@ set_io dat[5]       R9
 set_io dat[6]       K9
 set_io dat[7]       P9
 
-set_io i_int        F5 # zufällig ausgewählt
-set_io i_nmi        B1 # zufällig ausgewählt
-
 set_io uart_tx      E4
 set_io uart_rx      B2
 
-# i_miso
-# o_mosi
-# o_sck
-# o_ss
+set_io i_miso       D13
+set_io o_mosi       B14
+set_io o_sck        C12
+set_io o_ss         E11
 
 set_io o_led1       M12
 set_io o_led2       R16

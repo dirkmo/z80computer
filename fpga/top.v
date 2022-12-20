@@ -11,8 +11,6 @@ module top(
     output sram_cs_n,
     output sram_oe_n,
     output sram_we_n,
-    input i_int,
-    input i_nmi,
     output uart_tx,
     input uart_rx,
 
@@ -94,7 +92,7 @@ end
 
 always @* begin
     case(cpu_addr[15:0])
-`include "../fpga/rom.inc"
+`include "../sw/test/rom.inc"
         default: cpu_di = dat;
     endcase
 end

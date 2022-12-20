@@ -5,10 +5,11 @@ DEVICE = hx8k
 SOURCES =$(wildcard ../rtl/*.v)
 SOURCES+=$(wildcard ../import/uartmaster/rtl/*.v)
 SOURCES+=$(wildcard ../import/tv80/rtl/core/*.v)
+SOURCES+=../import/spi/rtl/spi.v
 #SOURCES+=pll.v
 SOURCES+=top.v
 
-PROG=../sim/test.asm
+PROG=../sw/test/rom.inc
 
 # Automatic Variables
 # $@ The file name of the target of the rule
@@ -18,17 +19,13 @@ PROG=../sim/test.asm
 
 all: $(PROJ).rpt $(PROJ).bin
 
-rom.inc: rom.mem
-	./make-rom.py $^ > $@
-
-rom.mem: $(PROG)
-	z80asm -o rom.bin $^
-	hexdump -ve '1/1 "%02x "' rom.bin > rom.mem
+$(PROG):
+	make -C ../sw/test
 
 pll.v:
 	icepll -i 100 -o 25 -m -f $@
 
-%.json: rom.inc pll.v %.v
+%.json: $(PROG) pll.v %.v
 	yosys -p synth_ice40 -o $@ $(SOURCES)
 
 %.asc: $(PIN_DEF) %.json
