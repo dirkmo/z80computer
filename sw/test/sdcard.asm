@@ -222,6 +222,8 @@ sdcard_write: ; write block
 sdcard_init:
     push hl
 
+    ld a,5
+    call spi_setdiv
     call spi_cs_deassert
 
     call iputs

@@ -25,14 +25,23 @@ spi_wait:
 
 spi_cs_assert:
     push af
-    ld a, BIT_SPI_ST_SEL
+    ld a, (.spi_divider)
+    or BIT_SPI_ST_SEL
     out (PORT_SPI_ST), a
     pop af
     ret
 
 spi_cs_deassert:
     push af
-    ld a, 0
+    ld a, (.spi_divider)
     out (PORT_SPI_ST), a
     pop af
     ret
+
+spi_setdiv: ; a: divider 0..7
+    and 0x7
+    sla a
+    ld (.spi_divider),a
+    ret
+
+.spi_divider: db 0

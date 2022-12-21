@@ -237,6 +237,7 @@ end
 always @(posedge i_clk)
    if (o_cpu_addr[7:0] == 8'hff && ~cpu_iorq_n)
        $finish;
+
 `endif
 
 endmodule
