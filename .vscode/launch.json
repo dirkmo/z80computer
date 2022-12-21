@@ -5,7 +5,21 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) Launch",
+            "name": "Python: bus.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/import/uartmaster/bus.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-f", "${workspaceFolder}/sw/test/rom.bin",
+                "-o", "0x0",
+                "-w",
+                "-R"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "(gdb) simulation",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/sim/build/simulation",

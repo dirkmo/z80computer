@@ -3,7 +3,8 @@ include "defs.asm"
     org 0
     call iputs
     db "Start\r\n",0
-    call sdcard_init
+
+;    call sdcard_init
 
     ;ld bc,0x0000
     ;ld de,0x0001
@@ -12,8 +13,6 @@ include "defs.asm"
 done:
     out (0xff), a
 end:
-    inc a
-    out (PORT_LEDS),a
     jp end
 
 include "debug.asm"

@@ -92,10 +92,11 @@ end
 `endif
 
 always @* begin
-    case(cpu_addr[15:0])
-`include "../sw/test/rom.inc"
-        default: cpu_di = dat;
-    endcase
+//    case(cpu_addr[15:0])
+//`include "../sw/test/rom.inc"
+//        default: cpu_di = dat;
+//    endcase
+    cpu_di = dat;
 end
 
 endmodule

@@ -1,3 +1,9 @@
 {
-    "cmake.sourceDirectory": "${workspaceFolder}/sim"
+    "cmake.sourceDirectory": "${workspaceFolder}/sim",
+    "files.associations": {
+        "hash_map": "cpp",
+        "hash_set": "cpp",
+        "bitset": "cpp",
+        "algorithm": "cpp"
+    }
 }

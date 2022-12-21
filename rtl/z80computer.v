@@ -223,6 +223,9 @@ always @(posedge i_clk) begin
     if (leds_cs && cpu_we) begin
         {o_led2, o_led1} <= o_cpu_dat[1:0];
     end
+    //if (reset) begin
+       {o_led2, o_led1} <= {reset, ~reset};
+    //end
 end
 
 `ifdef SIM
