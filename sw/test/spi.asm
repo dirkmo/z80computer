@@ -16,9 +16,10 @@ spi_transceive: ; a: data to send
 
 spi_wait:
     push af
+.spi_wait_loop:
     in a, (PORT_SPI_ST)
-    cp BIT_SPI_ST_BUSY
-    jr z, spi_wait
+    and BIT_SPI_ST_BUSY
+    jr nz, .spi_wait_loop
     pop af
     ret
 

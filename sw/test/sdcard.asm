@@ -18,19 +18,22 @@
 .cmd_r1: ; hl: cmd data
     push bc
     ld b, 6
-    ; call spi_cs_assert
 .cmd_r1_loop:
     ld a, (hl)
     inc hl
     call spi_wait_transmit
     djnz .cmd_r1_loop
-    ; dummy byte
-    call spi_wait
-    ld a,0xff
-    call spi_wait_transmit
     ; fetch response r1
+    ld b,8
+.cmd_r1_rsp_loop:
+    ld a,0xff
     call spi_transceive
-    ;call spi_cs_deassert
+    ld c,a
+    and 0x80
+    jr z,.cmd_r1_done
+    djnz .cmd_r1_rsp_loop
+.cmd_r1_done:
+    ld a,c
     pop bc
     ret
 
@@ -40,6 +43,11 @@
     call spi_cs_assert
     call .cmd_r1
     call spi_cs_deassert
+
+    push af
+    call uart_hexdump_a
+    call puts_crlf
+    pop af
     dec a ; idle bit (#0) should be set
     ret
 
@@ -49,6 +57,10 @@
     call spi_cs_assert
     call .cmd_r1
     push af
+
+    call uart_hexdump_a
+    call puts_crlf
+
     ; read 4 bytes
     ld a,0xff
     call spi_transceive
@@ -66,9 +78,17 @@
     ld hl, .cmd55_data
     call spi_cs_assert
     call .cmd_r1
+    call spi_cs_deassert
+    call spi_cs_assert
     ld hl, .cmd41_data
     call .cmd_r1
     call spi_cs_deassert
+    push af
+
+    call uart_hexdump_a
+    call puts_crlf
+
+    pop af
     cp 1
     jr z, .acmd41
     ret
@@ -182,6 +202,10 @@ sdcard_write: ; write block
     call spi_cs_assert
     call .cmd_r1
     push af
+
+    call uart_hexdump_a
+    call puts_crlf
+
     ; read 4 bytes
     ld a,0xff
     call spi_transceive
@@ -197,12 +221,33 @@ sdcard_write: ; write block
 
 sdcard_init:
     push hl
+
+    call spi_cs_deassert
+
+    call iputs
+    db "genclks\r\n\0"
     call .gen_clks
+
+    call iputs
+    db "cmd0\r\n\0"
     call .cmd0
-    call .cmd8
-    call .cmd58
-    call .acmd41
-    call .cmd58
+
+    call iputs
+    db "cmd8\r\n\0"
+    ;call .cmd8
+
+    call iputs
+    db "cmd58\r\n\0"
+    ;call .cmd58
+
+    call iputs
+    db "acmd41\r\n\0"
+    ;call .acmd41
+
+    call iputs
+    db "cmd58\r\n\0"
+    ;call .cmd58
+
     pop hl
     ret
 
