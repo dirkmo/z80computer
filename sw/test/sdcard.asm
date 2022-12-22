@@ -1,11 +1,13 @@
 ; sdcard functions
 
+.debug_prints: equ 0
+
 .gen_clks:
     ; after power-up the sd-card needs some clock cycles to initialize
     ; no slave-select needed
     push af
     push bc
-    ld a,0
+    ld a,0xff
     ld b,10
 .gen_clks_loop:
     call spi_wait_transmit
@@ -38,17 +40,11 @@
     ret
 
 .cmd0: ; send cmd0, card is idle afterwards
-    ; returns: a=0 on success
+    ; returns: a=1 on success
     ld hl, .cmd0_data
     call spi_cs_assert
     call .cmd_r1
     call spi_cs_deassert
-
-    push af
-    call uart_hexdump_a
-    call puts_crlf
-    pop af
-    dec a ; idle bit (#0) should be set
     ret
 
 .cmd8: ; send cmd8, voltage setup
@@ -56,11 +52,7 @@
     ; cmd8 returns R7, which is R1 + 4 bytes of data
     call spi_cs_assert
     call .cmd_r1
-    push af
-
-    call uart_hexdump_a
-    call puts_crlf
-
+    push af ; put R1 on stack
     ; read 4 bytes
     ld a,0xff
     call spi_transceive
@@ -71,10 +63,13 @@
     ld a,0xff
     call spi_transceive
     call spi_cs_deassert
-    pop af
+    pop af ; pop R1 from stack
     ret
 
 .acmd41: ; send cmd8, voltage setup
+    push bc
+    ld b, 10 ; retries
+.acmd41_loop:
     ld hl, .cmd55_data
     call spi_cs_assert
     call .cmd_r1
@@ -83,14 +78,12 @@
     ld hl, .cmd41_data
     call .cmd_r1
     call spi_cs_deassert
-    push af
-
-    call uart_hexdump_a
-    call puts_crlf
-
-    pop af
-    cp 1
-    jr z, .acmd41
+    cp 0
+    jr z,.acmd41_done
+    djnz .acmd41_loop
+    ld a,0xff ; error
+.acmd41_done:
+    pop bc
     ret
 
 sdcard_read: ; read block
@@ -202,10 +195,6 @@ sdcard_write: ; write block
     call spi_cs_assert
     call .cmd_r1
     push af
-
-    call uart_hexdump_a
-    call puts_crlf
-
     ; read 4 bytes
     ld a,0xff
     call spi_transceive
@@ -219,45 +208,78 @@ sdcard_write: ; write block
     pop af
     ret
 
-sdcard_init:
+sdcard_init: ; destroys hl
     push hl
-
-    ld a,5
+    ; slow spi clk
+    ld a,6
     call spi_setdiv
-    call spi_cs_deassert
+    call spi_cs_deassert ; apply spi divider
 
-    call iputs
-    db "genclks\r\n\0"
     call .gen_clks
 
-    call iputs
-    db "cmd0\r\n\0"
+    ; put card into spi mode in idle state
     call .cmd0
+    cp 1
+    jr nz, .sdcard_init_error
 
+    ; fast spi clk
+    ld a,0
+    call spi_setdiv
+
+if .debug_prints
     call iputs
     db "cmd8\r\n\0"
-    ;call .cmd8
+endif
 
+    call .cmd8
+    ; old cards do not return 1 (idle) here
+    ; currently, only new cards are supported
+    cp 1
+    jr nz, .sdcard_init_error
+
+if .debug_prints
     call iputs
     db "cmd58\r\n\0"
-    ;call .cmd58
+endif
 
+    ; read OCR register
+    call .cmd58
+    cp 1
+    jr nz, .sdcard_init_error
+
+if .debug_prints
     call iputs
     db "acmd41\r\n\0"
-    ;call .acmd41
+endif
 
+    ; initialize card and HCS bit
+    ld a,1 ; HCS=1 for newer cards
+    call .acmd41
+    cp 0
+    jr nz, .sdcard_init_error
+
+    ; read OCR again
+if .debug_prints
     call iputs
     db "cmd58\r\n\0"
-    ;call .cmd58
+endif
+    call .cmd58
+    cp 0
+    jr nz, .sdcard_init_error
 
     pop hl
     ret
+.sdcard_init_error:
+    call iputs
+    db "SD-Card init error\r\n\0"
+    pop hl
+    ret
 
-.cmd_scratch: ds 6
 
+.cmd_scratch: ds 6 ; TODO: put scratch on stack
 
 .cmd0_data:  db 0x40, 0x00, 0x00, 0x00, 0x00, 0x95
 .cmd8_data:  db 0x48, 0x00, 0x00, 0x01, 0x00, 0xd5
-.cmd41_data: db 0x69, 0x40, 0x00, 0x00, 0x00, 0x77
+.cmd41_data: db 0x69, 0x40, 0x00, 0x00, 0x00, 0x77 ; 0x40: HCS bit set
 .cmd55_data: db 0x77, 0x00, 0x00, 0x00, 0x00, 0x65
 .cmd58_data: db 0x7a, 0x00, 0x00, 0x00, 0x00, 0xfd
