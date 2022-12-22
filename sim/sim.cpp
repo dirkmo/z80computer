@@ -148,7 +148,6 @@ int main(int argc, char *argv[]) {
 #endif
         if(tickcount == 100*clockcycle_ps) {
             uart_send(1, ",L1234Wfa0102030405");
-            printf("hallo\n");
         }
         tick();
     }

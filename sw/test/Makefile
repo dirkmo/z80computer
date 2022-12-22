@@ -1,5 +1,7 @@
 all: rom.inc
 
+SEND=../../import/uartmaster/scripts/send.py
+
 rom.inc: rom.mem
 	./make-rom.py $^ > $@
 
@@ -13,6 +15,6 @@ clean:
 	rm -f rom.bin rom.mem rom.inc rom.lst rom.sym
 
 prog: rom.mem
-	../../send.py ,L0000W
-	sed 's/ //g' $^ | xargs ../../send.py
-	../../send.py .
+	${SEND} ,L0000W
+	sed 's/ //g' $^ | xargs ${SEND}
+	${SEND} .
