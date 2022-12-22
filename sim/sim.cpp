@@ -30,23 +30,17 @@ void opentrace(const char *vcdname) {
     }
 }
 
-void tick(int t = 3) {
-    if (t&1) {
-        pCore->i_clk = 1;
-        pCore->eval();
-        if(pTrace) pTrace->dump(static_cast<vluint64_t>(tickcount));
-        tickcount += clockcycle_ps / 2;
-    }
-    if (t&2) {
-        pCore->i_clk = 0;
-        pCore->eval();
-        if(pTrace) pTrace->dump(static_cast<vluint64_t>(tickcount));
-        tickcount += clockcycle_ps / 2;
-    }
+void tick() {
+    pCore->i_clk = !pCore->i_clk;
+    tickcount += clockcycle_ps / 2;
+    pCore->eval();
+    if(pTrace) pTrace->dump(static_cast<vluint64_t>(tickcount));
 }
 
 void reset() {
     pCore->i_reset = 1;
+    tick();
+    tick();
     tick();
     tick();
     tick();
@@ -101,7 +95,6 @@ void handle(Vz80computer *pCore) {
     if (ch != 255) {
         uart_putc(0, ch);
     }
-    tick();
 }
 
 int program_load(const char *fn, uint16_t offset) {
@@ -148,11 +141,16 @@ int main(int argc, char *argv[]) {
     while(!Verilated::gotFinish()) {
         handle(pCore);
 #ifdef TRACE
-        if(tickcount > 50000*clockcycle_ps) {
+        if(tickcount > 80000*clockcycle_ps) {
             printf("timeout\n");
             break;
         }
 #endif
+        if(tickcount == 100*clockcycle_ps) {
+            uart_send(1, ",L1234Wfa0102030405");
+            printf("hallo\n");
+        }
+        tick();
     }
 
     pCore->final();

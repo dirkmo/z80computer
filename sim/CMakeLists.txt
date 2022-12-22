@@ -27,7 +27,7 @@ target_include_directories(simulation PUBLIC
     ../import/uartmaster/sim
     ../import/spi/sim
 )
-target_compile_definitions(simulation PUBLIC EDGE_DETECTION)
+#target_compile_definitions(simulation PUBLIC EDGE_DETECTION)
 
 if(TRACE)
 target_compile_definitions(simulation PUBLIC TRACE)
@@ -60,7 +60,7 @@ verilate(simulation TRACE
 #                -Wall
 #                +librescan
 #                +libext+.v
-#                -CFLAGS "-g" -O0
+                -CFLAGS "-g" -O0
 
     TOP_MODULE  z80computer
 
