@@ -1,24 +1,26 @@
 ; sdcard functions
 
+; all functions do not preserve registers
+
 .debug_prints: equ 0
+
 
 .gen_clks:
     ; after power-up the sd-card needs some clock cycles to initialize
     ; no slave-select needed
-    push af
-    push bc
     ld a,0xff
     ld b,10
 .gen_clks_loop:
     call spi_wait_transmit
     djnz .gen_clks_loop
-    pop bc
-    pop af
     ret
+
 
 ; send cmd at (hl) and return R1 in a
 .cmd_r1: ; hl: cmd data
-    push bc
+    ; send dummy byte, this prevents errors on some cards!?
+    ld a,0xff
+    call spi_wait_transmit
     ld b, 6
 .cmd_r1_loop:
     ld a, (hl)
@@ -36,8 +38,30 @@
     djnz .cmd_r1_rsp_loop
 .cmd_r1_done:
     ld a,c
-    pop bc
     ret
+
+
+; send cmd at (hl) and return R3/7 in registers
+; R1: a, R3/7 in b,c,d,e
+.cmd_r7:
+    call .cmd_r1
+    push af
+    ; read 4 bytes
+    ld a,0xff
+    call spi_transceive
+    ld b,a
+    ld a,0xff
+    call spi_transceive
+    ld c,a
+    ld a,0xff
+    call spi_transceive
+    ld d,a
+    ld a,0xff
+    call spi_transceive
+    ld e,a
+    pop af
+    ret
+
 
 .cmd0: ; send cmd0, card is idle afterwards
     ; returns: a=1 on success
@@ -47,27 +71,25 @@
     call spi_cs_deassert
     ret
 
+
 .cmd8: ; send cmd8, voltage setup
+       ; destroys bc,de
+.cmd8_loop:
     ld hl, .cmd8_data
     ; cmd8 returns R7, which is R1 + 4 bytes of data
     call spi_cs_assert
-    call .cmd_r1
-    push af ; put R1 on stack
-    ; read 4 bytes
-    ld a,0xff
-    call spi_transceive
-    ld a,0xff
-    call spi_transceive
-    ld a,0xff
-    call spi_transceive
-    ld a,0xff
-    call spi_transceive
+    call .cmd_r7
     call spi_cs_deassert
-    pop af ; pop R1 from stack
-    ret
+if .debug_prints
+    push af
+    call uart_hexdump_a
+    call puts_crlf
+    pop af
+endif
+    ret ; return a=1 on success
+
 
 .acmd41: ; send cmd8, voltage setup
-    push bc
     ld b, 10 ; retries
 .acmd41_loop:
     ld hl, .cmd55_data
@@ -83,13 +105,12 @@
     djnz .acmd41_loop
     ld a,0xff ; error
 .acmd41_done:
-    pop bc
     ret
 
+
 sdcard_read: ; read block
-    ; destroys a, hl
-    ; sector in bc,de
-    ; written to (hl)
+    ; block address to read in bc,de
+    ; block data is written to (hl)
     ld a,17|0x40
     ld (.cmd_scratch),a
     ld a,b
@@ -132,10 +153,10 @@ sdcard_read: ; read block
     call spi_cs_deassert
     ret
 
+
 sdcard_write: ; write block
-    ; destroys a, hl
-    ; sector in bc,de
-    ; data from (hl) written to sdcard
+    ; block address in bc,de
+    ; data from (hl) written to sdcard block
     ld a,24|0x40
     ld (.cmd_scratch),a
     ld a,b
@@ -189,33 +210,29 @@ sdcard_write: ; write block
     call spi_cs_deassert
     ret
 
+
 .cmd58: ; read OCR
+    ; destroys bc,de
     ld hl, .cmd58_data
     ; cmd8 returns R3, which is R1 + 4 bytes of data
     call spi_cs_assert
-    call .cmd_r1
-    push af
-    ; read 4 bytes
-    ld a,0xff
-    call spi_transceive
-    ld a,0xff
-    call spi_transceive
-    ld a,0xff
-    call spi_transceive
-    ld a,0xff
-    call spi_transceive
+    call .cmd_r7
     call spi_cs_deassert
-    pop af
     ret
 
-sdcard_init: ; destroys hl
-    push hl
+
+sdcard_init: ; does not preserve any registers
     ; slow spi clk
     ld a,6
     call spi_setdiv
     call spi_cs_deassert ; apply spi divider
 
     call .gen_clks
+
+if .debug_prints
+    call iputs
+    db "cmd0\r\n\0"
+endif
 
     ; put card into spi mode in idle state
     call .cmd0
@@ -266,20 +283,19 @@ endif
     call .cmd58
     cp 0
     jr nz, .sdcard_init_error
-
-    pop hl
     ret
 .sdcard_init_error:
     call iputs
     db "SD-Card init error\r\n\0"
-    pop hl
     ret
 
 
-.cmd_scratch: ds 6 ; TODO: put scratch on stack
+; for cmd17 (read_block) / cmd24 (write_block)
+.cmd_scratch: ds 6
 
+;               40:33 32:24 23:16 15:8   7:0  crc
 .cmd0_data:  db 0x40, 0x00, 0x00, 0x00, 0x00, 0x95
-.cmd8_data:  db 0x48, 0x00, 0x00, 0x01, 0x00, 0xd5
+.cmd8_data:  db 0x48, 0x00, 0x00, 0x01, 0x00, 0xd5 ; 11:8 VHS (001=3.3V)
 .cmd41_data: db 0x69, 0x40, 0x00, 0x00, 0x00, 0x77 ; 0x40: HCS bit set
 .cmd55_data: db 0x77, 0x00, 0x00, 0x00, 0x00, 0x65
 .cmd58_data: db 0x7a, 0x00, 0x00, 0x00, 0x00, 0xfd
