@@ -25,3 +25,4 @@ sw/test/rom.inc
 sw/test/rom.lst
 sw/test/rom.mem
 sw/test/rom.sym
+sw/os/sys.mem

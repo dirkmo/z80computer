@@ -28,7 +28,7 @@ bios_dma_addr:  dw 0
 
 .go_cpm:
     call iputs
-    db "CP/M 2.2 starting up...\r\n\0"
+    db "CP/M 2.2 (c) 1979 by Digital Research\r\n\0"
 	ld	a,0xc3		; opcode for JP
 	ld	(0),a
 	ld	hl,WBOOT
@@ -212,7 +212,7 @@ endif
 ; then has the option of pressing a carriage return to ignore the error, or
 ; CTRL-C to abort.
 
-.bios_read:
+.bios_read__:
     ld a, (bios_disk)
     out (PORT_DISK_CFG), a
     ld a, (bios_track)
@@ -230,12 +230,11 @@ endif
     inc hl
     dec c
     jr nz, .bios_read_1
-
 	xor	a			; A = 0 = OK
     ret
 
 
-.bios_read__:
+.bios_read:
 	; fake a 'blank'/formatted sector
 	ld	hl,(bios_dma_addr)	; HL = buffer address
 	ld	de,(bios_dma_addr)
@@ -321,3 +320,6 @@ uart_flush_tx:
     ret
 
 simstop: out (0xff), a
+
+include "../test/sdcard.asm"
+include "../test/spi.asm"

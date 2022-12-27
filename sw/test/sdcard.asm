@@ -82,8 +82,10 @@
     call spi_cs_deassert
 if .debug_prints
     push af
-    call uart_hexdump_a
+    push bc
+    call hexdump_a
     call puts_crlf
+    pop bc
     pop af
 endif
     ret ; return a=1 on success
@@ -157,6 +159,11 @@ sdcard_read: ; read block
 sdcard_write: ; write block
     ; block address in bc,de
     ; data from (hl) written to sdcard block
+    push bc
+    call iputs
+    db "sdcard_write\r\n\0"
+    pop bc
+
     ld a,24|0x40
     ld (.cmd_scratch),a
     ld a,b
@@ -171,6 +178,16 @@ sdcard_write: ; write block
     ld hl, .cmd_scratch
     call spi_cs_assert
     call .cmd_r1
+
+if .debug_prints
+    push af
+    push bc
+    call hexdump_a
+    call puts_crlf
+    pop bc
+    pop af
+endif
+
     pop hl
     and 0xfe
     cp 0
@@ -182,7 +199,7 @@ sdcard_write: ; write block
     ld a, 0xfe
     call spi_wait_transmit
     ; send block data
-    ld bc,5;512
+    ld bc,512
 .sdcard_write_loop:
     ld a,(hl)
     inc hl
@@ -198,7 +215,7 @@ sdcard_write: ; write block
     ; receive data response token xxx00101
     call spi_transceive
     and 0x1f
-    cp 5
+    cp 5 ; (5=00101)
     jr nz, .sdcard_write_ret
 .sdcard_write_busy:
     ; wait while sdcard is busy
