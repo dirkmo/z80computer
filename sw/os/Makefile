@@ -22,5 +22,15 @@ clean:
 
 prog: sys.mem
 	${SEND} ,L0000W
-	sed 's/ //g' $^ | xargs ${SEND}
+	sed 's/ //g' $^ | xargs ${SEND} -v
 	${SEND} .
+
+reset:
+	${SEND} ,.
+
+prog_disk: disk.img
+	lsblk | grep ^sdc
+	sudo dd if=disk.img of=/dev/sdc
+	sync
+
+.PHONY: clean build reset disk.img
