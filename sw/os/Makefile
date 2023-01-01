@@ -8,7 +8,7 @@ cpm22.asm:
 	make -C ../cpm22
 
 sys.bin: cpm22.asm main.asm bios.asm puts.asm hexdump.asm dph.asm
-	z80asm -o $@ --list=sys.lst --label=sys.sym main.asm
+	z80asm -I../cpm22 -I../test -o $@ --list=sys.lst --label=sys.sym main.asm
 
 sys.mem: sys.bin
 	hexdump -ve '1/1 "%02x "' $^ > $@

@@ -28,7 +28,7 @@ bios_dma_addr:  dw 0
 
 .go_cpm:
     call iputs
-    db "CP/M 2.2 (c) 1979 by Digital Research\r\n\0"
+    db "CP/M 2.2 (c) 1981 by Digital Research\r\n\0"
 	ld	a,0xc3		; opcode for JP
 	ld	(0),a
 	ld	hl,WBOOT
@@ -40,6 +40,8 @@ bios_dma_addr:  dw 0
 
 	ld	bc,0x80		; this is here because it is in the example CBIOS (AG p.52)
 	call	.bios_setdma
+
+    call sdcard_init
 
 	ld	c,0		; The ONLY valid drive WE have is A!
 	jp	CBASE
@@ -212,41 +214,66 @@ endif
 ; then has the option of pressing a carriage return to ignore the error, or
 ; CTRL-C to abort.
 
-.bios_read__:
-    ld a, (bios_disk)
-    out (PORT_DISK_CFG), a
-    ld a, (bios_track)
-    out (PORT_DISK_CFG), a
-    ld a, (bios_track+1)
-    out (PORT_DISK_CFG), a
-    ld a, (bios_sector)
-    out (PORT_DISK_CFG), a
-
-    ld hl, (bios_dma_addr)
-    ld c, 128
-.bios_read_1:
-    in a, (PORT_DISK_IO)
-    ld (hl), a
-    inc hl
-    dec c
-    jr nz, .bios_read_1
-	xor	a			; A = 0 = OK
-    ret
-
-
 .bios_read:
-	; fake a 'blank'/formatted sector
-	ld	hl,(bios_dma_addr)	; HL = buffer address
-	ld	de,(bios_dma_addr)
-	inc	de			; DE = buffer address + 1
-	ld	bc,0x007f		; BC = 127
-	ld	(hl),0xe5
-	ldir				; set 128 bytes from (hl) to 0xe5
 if _DEBUG_LEVEL > 2
     call iputs
     db ".bios_read\r\n\0"
+
+    call iputs
+    db "track: \0"
+    ld de,(bios_track)
+    ld a,d
+    call hexdump_a
+    ld a,e
+    call hexdump_a
+    call puts_crlf
+
+    call iputs
+    db "sector: \0"
+    ld de,(bios_sector)
+    ld a,d
+    call hexdump_a
+    ld a,e
+    call hexdump_a
+    call puts_crlf
+
 endif
+
+    ; 16384 tracks, 4 sectors per track
+    ; bios_sector (0-3)
+    ; bios_track (0-16383)
+    ld bc,0
+    ld de,(bios_track)
+    ld hl,bios_diskbuf
+    call sdcard_read
+
+    ; copy sector bytes into dma area
+    ld bc, 128
+
+    ld hl,bios_diskbuf
+    ld a,(bios_sector)
+.bios_read_secloop:
+    cp 0
+    jr z, .bios_read_2
+    add hl, bc
+    dec a
+    jr .bios_read_secloop
+
+.bios_read_2:
+    ld de,(bios_dma_addr)
+    ldir ; hl: src, de: dest, bc: count
+
+
+if _DEBUG_LEVEL > 3
+    ld hl,(bios_dma_addr)
+    ld bc, 16
+    ld e,0
+    call hexdump
+endless: jp endless
+endif
+
 	xor	a			; A = 0 = OK
+
     ret
 
 ; Data is written from the currently selected DMA address to the currently
@@ -321,5 +348,5 @@ uart_flush_tx:
 
 simstop: out (0xff), a
 
-include "../test/sdcard.asm"
-include "../test/spi.asm"
+bios_diskbuf:
+    ds 512
