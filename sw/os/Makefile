@@ -16,6 +16,7 @@ sys.mem: sys.bin
 disk.img:
 	mkfs.cpm -f z80-retro-2k-8m $@
 	cpmcp -f z80-retro-2k-8m $@ ../cpm22/filesystem/* 0:
+	cpmcp -f z80-retro-2k-8m $@ ../stuff/nemesis/* 1:
 
 clean:
 	rm -f sys.bin sys.lst sys.sym sys.mem
@@ -29,8 +30,7 @@ reset:
 	${SEND} ,.
 
 prog_disk: disk.img
-	lsblk | grep ^sdc
-	sudo dd if=disk.img of=/dev/sdc
+	sudo dd if=disk.img of=`lsblk -S -y -n -l -p -o PATH,SIZE,VENDOR,HOTPLUG | awk '{ if ($$4=="1") print $$0 }' | pmenu -p "Please choose device:" | awk '{ print $$1 }'`
 	sync
 
-.PHONY: clean build reset disk.img
+.PHONY: clean build reset disk.img prog_disk

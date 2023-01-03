@@ -28,7 +28,9 @@ bios_dma_addr:  dw 0
 
 .go_cpm:
     call iputs
-    db "CP/M 2.2 (c) 1981 by Digital Research\r\n\0"
+    db "z80computer by dirkmo\r\nhttps://github.com/dirkmo/z80computer\r\n\n\0"
+    call iputs
+    db "CP/M 2.2 (c) 1979 by Digital Research\r\n\0"
 	ld	a,0xc3		; opcode for JP
 	ld	(0),a
 	ld	hl,WBOOT
@@ -39,7 +41,7 @@ bios_dma_addr:  dw 0
 	ld	(6),hl		; address 6 now = JP FBASE
 
 	ld	bc,0x80		; this is here because it is in the example CBIOS (AG p.52)
-	call	.bios_setdma
+	call .bios_setdma
 
     call sdcard_init
 
@@ -47,6 +49,7 @@ bios_dma_addr:  dw 0
 	jp	CBASE
 
 .bios_boot:
+    ld sp,bios_stack
 if _DEBUG_LEVEL > 2
     call iputs
     db ".bios_boot\r\n\0"
@@ -55,6 +58,7 @@ endif
     jp .go_cpm
 
 .bios_wboot:
+    ld sp,bios_stack
 if _DEBUG_LEVEL > 2
     call iputs
     db ".bios_wboot\r\n\0"
@@ -288,7 +292,7 @@ if _DEBUG_LEVEL > 2
     call iputs
     db ".bios_write\r\n\0"
 endif
-    ld a,1
+    ld a,0
     ret
 
 .bios_prstat:

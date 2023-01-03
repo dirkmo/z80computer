@@ -12,9 +12,6 @@ include "cpm22.asm"
 
 include "bios.asm"
 
-bios_stack_lo:
-            ds 64,0x55
-bios_stack:
 
 start:      ld sp, bios_stack
             ld a,0
@@ -34,3 +31,8 @@ include "dph.asm"
 
 include "sdcard.asm"
 include "spi.asm"
+
+
+bios_stack_lo:
+            ds 128,0x55
+bios_stack:
